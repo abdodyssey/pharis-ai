@@ -7,6 +7,7 @@
   /* Custom Colors (Contoh: Catppuccin/Minimalist Vibes) */
   --color-brand-primary: #2563eb; /* Blue 600 */
   --color-brand-secondary: #4f46e5; /* Indigo 600 */
+  --color-glass-white: rgba(255, 255, 255, 0.8);
 
   /* Animasi Custom untuk Transisi Step */
   --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
@@ -26,11 +27,17 @@
 /* Base Styles */
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 min-h-screen;
+    @apply bg-slate-50 text-slate-900 min-h-screen selection:bg-brand-primary/10;
   }
 }
 
 /* Utility Class Custom */
-.step-container {
-  @apply bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-10 animate-fade-in-up;
+@layer utilities {
+  .glass-effect {
+    @apply backdrop-blur-md bg-(--color-glass-white) border-b border-slate-200/50;
+  }
+  
+  .step-container {
+    @apply bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-10 animate-fade-in-up;
+  }
 }
