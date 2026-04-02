@@ -2,11 +2,32 @@
 
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function HomePage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        router.push("/login");
+      } else {
+        setCheckingAuth(false);
+      }
+    };
+    checkAuth();
+  }, [router]);
+
+  if (checkingAuth) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const startNewResearch = async () => {
     setLoading(true);

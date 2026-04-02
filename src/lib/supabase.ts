@@ -1,8 +1,10 @@
-import { createClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 
-// Ambil URL dan Anon Key dari file .env.local kamu
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+export const createClient = () =>
+  createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
 
-// Inisialisasi client Supabase
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// For backward compatibility while migrating
+export const supabase = createClient()
