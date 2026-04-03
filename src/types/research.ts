@@ -17,6 +17,15 @@ export interface BibliographyEntry {
   authors: string;
   year?: number;
   url: string;
+  doi?: string;
+  full_paper_url?: string;
+  abstract?: string;
+}
+
+export interface TitleOption {
+  title: string;
+  gap: string;
+  rationale: string;
 }
 
 export interface ResearchSession {
@@ -29,8 +38,10 @@ export interface ResearchSession {
   bibliography: BibliographyEntry[]; // Grounded research papers
   current_step: ResearchStep; // Tracking progres 1-5
   is_completed: boolean;
+  title_options: TitleOption[]; // 3 options for Step 2
   metadata?: Record<string, unknown>; // Data tambahan non-sensitif
   created_at: string;
+  updated_at: string;
 }
 
 export interface ResearchSection {

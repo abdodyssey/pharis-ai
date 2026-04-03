@@ -4,34 +4,47 @@ import { supabase } from "./supabase";
 export const callResearchAI = async (
   topic: string,
   sessionId: string | null = null,
+  mode: "brainstorm" | "generate" = "brainstorm",
+  selectedTitle?: string
 ) => {
-  const session = (await supabase.auth.getSession()).data.session;
-  
-  if (!session) {
-    throw new Error("Sesi tidak ditemukan. Silakan login kembali.");
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 40000); // 40s timeout guard
+
+  try {
+    const { data, error } = await supabase.functions.invoke("research-builder", {
+      body: { 
+        topic, 
+        sessionId: sessionId || null,
+        mode,
+        selectedTitle
+      },
+      headers: {
+        "x-client-info": "pharis-ai-frontend",
+      },
+    });
+
+    if (error) {
+      // Return error as data instead of throwing to prevent Next.js dev overlay crash
+      const technicalMessage = error.message;
+      let status = (error as any).status || (error as any).status_code;
+      
+      try {
+        if (error.context && typeof (error.context as any).json === 'function') {
+          const body = await (error.context as any).json();
+          if (body.error) return { data: null, error: body.error, status };
+        }
+      } catch (e) {}
+
+      return { data: null, error: technicalMessage || "Gagal memproses ide riset.", status };
+    }
+
+    return { data, error: null, status: 200 };
+  } catch (err: any) {
+    if (err.name === 'AbortError' || err.message?.includes('abort')) {
+      return { data: null, error: "Waktu tunggu habis (Timeout). Server AI sedang padat.", status: 408 };
+    }
+    return { data: null, error: err.message || "Unknown Error", status: err.status || 500 };
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  const endpoint = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/research-builder`;
-  
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${session.access_token}`,
-      apikey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    },
-    body: JSON.stringify({ 
-      topic, 
-      sessionId: sessionId || null 
-    }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    console.error("AI Service Error Response:", data);
-    throw new Error(data.error || `Error ${response.status}: Gagal memproses ide riset.`);
-  }
-
-  return data;
 };

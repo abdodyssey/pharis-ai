@@ -1,10 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useResearchStore } from "@/store/useResearchStore";
-import SidebarOutline from "./editor/SidebarOutline";
-import EditorPane from "./editor/EditorPane";
-import ChatBar from "./editor/ChatBar";
 import Link from "next/link";
 import { 
   Send, 
@@ -16,7 +13,13 @@ import {
   ChevronLeft,
   Book
 } from "lucide-react";
-import BibliographyDrawer from "./editor/BibliographyDrawer";
+import { SidebarSkeleton, EditorSkeleton } from "../shared/Skeletons";
+
+// Lazy-loaded components for Suspense
+const SidebarOutline = lazy(() => import("./editor/SidebarOutline"));
+const EditorPane = lazy(() => import("./editor/EditorPane"));
+const ChatBar = lazy(() => import("./editor/ChatBar"));
+const BibliographyDrawer = lazy(() => import("./editor/BibliographyDrawer"));
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import { saveAs } from "file-saver";
 
@@ -26,8 +29,19 @@ export default function ModularEditorWorkspace() {
     objectives, 
     sections, 
     activeSectionId, 
-    nextStep 
+    nextStep,
+    ensureIMRADStructure,
+    syncBibliographyToSection,
+    bibliography
   } = useResearchStore();
+
+  useEffect(() => {
+    ensureIMRADStructure();
+  }, [ensureIMRADStructure]);
+
+  useEffect(() => {
+    syncBibliographyToSection();
+  }, [bibliography, syncBibliographyToSection]);
   
   const [showReview, setShowReview] = useState(false);
   const [showBibliography, setShowBibliography] = useState(false);
@@ -51,14 +65,20 @@ export default function ModularEditorWorkspace() {
               ...objectives.map(
                 (obj) => new Paragraph({ text: `• ${obj}`, bullet: { level: 0 } })
               ),
-              ...sections.flatMap((section) => [
-                new Paragraph({
-                  text: section.title.toUpperCase(),
-                  heading: HeadingLevel.HEADING_1,
-                  spacing: { before: 400 },
-                }),
-                new Paragraph({ children: [new TextRun(section.content || "")] }),
-              ]),
+              ...sections.flatMap((section) => {
+                const cleanContent = (section.content || "")
+                  .replace(/<\/h[1-6]>|<\/p>|<\/li>/g, "\n") // Replace closing tags with newlines
+                  .replace(/<[^>]*>/g, ""); // Strip all other tags
+
+                return [
+                  new Paragraph({
+                    text: section.title.toUpperCase(),
+                    heading: HeadingLevel.HEADING_1,
+                    spacing: { before: 400 },
+                  }),
+                  new Paragraph({ children: [new TextRun(cleanContent)] }),
+                ];
+              }),
             ],
           },
         ],
@@ -138,16 +158,22 @@ export default function ModularEditorWorkspace() {
 
       {/* Main Workspace Body - 100% Height */}
       <main className="flex-1 flex overflow-hidden relative">
-        {/* Left Navigator (Outline) */}
-        <SidebarOutline />
+        {/* Left Navigator (Outline) - Suspense Boundary */}
+        <Suspense fallback={<SidebarSkeleton />}>
+          <SidebarOutline />
+        </Suspense>
         
-        {/* Center Canvas (Editing) */}
+        {/* Center Canvas (Editing) - Suspense Boundary */}
         <section className="flex-1 flex flex-col min-w-0 bg-white overflow-hidden">
-          <EditorPane key={activeSectionId} />
+          <Suspense fallback={<EditorSkeleton />}>
+            <EditorPane key={activeSectionId} />
+          </Suspense>
         </section>
 
-        {/* Interaction Bar (Chat) */}
-        <ChatBar />
+        {/* Interaction Bar (Chat) - Suspense Boundary */}
+        <Suspense fallback={<div className="w-80 bg-slate-50 border-l border-slate-100 animate-pulse" />}>
+          <ChatBar />
+        </Suspense>
       </main>
 
       {/* Review Slide-over / Modal */}
@@ -202,9 +228,10 @@ export default function ModularEditorWorkspace() {
                         <span className="w-2 h-10 bg-slate-950 rounded-full" />
                         {section.title}
                       </h2>
-                      <div className="text-slate-700 text-xl leading-relaxed whitespace-pre-wrap font-serif">
-                        {section.content || <span className="italic text-slate-300">Section content is empty.</span>}
-                      </div>
+                      <div 
+                        className="text-slate-700 text-xl leading-relaxed font-serif prose max-w-none prose-slate"
+                        dangerouslySetInnerHTML={{ __html: section.content || "<p class='italic text-slate-300'>Section content is empty.</p>" }}
+                      />
                     </div>
                   ))}
                 </div>
@@ -215,10 +242,12 @@ export default function ModularEditorWorkspace() {
       )}
 
       {/* Bibliography Drawer */}
-      <BibliographyDrawer 
-        isOpen={showBibliography} 
-        onClose={() => setShowBibliography(false)} 
-      />
+      <Suspense fallback={null}>
+        <BibliographyDrawer 
+          isOpen={showBibliography} 
+          onClose={() => setShowBibliography(false)} 
+        />
+      </Suspense>
     </div>
   );
 }

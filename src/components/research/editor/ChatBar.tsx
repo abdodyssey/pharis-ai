@@ -1,6 +1,8 @@
 // src/components/research/editor/ChatBar.tsx
 import { useState } from "react";
 import { useResearchStore } from "@/store/useResearchStore";
+import { useToastStore } from "@/store/useToastStore";
+import ModelLimitDialog from "@/components/shared/ModelLimitDialog";
 import { supabase } from "@/lib/supabase";
 import { Send, Loader2, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -13,8 +15,10 @@ export default function ChatBar() {
     refinedTitle, 
     updateSectionInStore 
   } = useResearchStore();
+  const { addToast } = useToastStore();
   const [query, setQuery] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRateLimitOpen, setIsRateLimitOpen] = useState(false);
 
   const activeSection = sections.find((s) => s.id === activeSectionId);
 
@@ -39,9 +43,17 @@ export default function ChatBar() {
         updateSectionInStore(activeSectionId, data.content);
         setQuery("");
       }
-    } catch (err) {
-      console.error("Gagal generate konten:", err);
-      // We use a cleaner UI than alert if possible, or just keep it simple but better.
+    } catch (err: any) {
+      console.error("Full Error Object:", err);
+      if (err.status === 429 || err.message?.includes("429")) {
+        setIsRateLimitOpen(true);
+      } else {
+        addToast({
+          type: "error",
+          message: "AI Research Bot Error",
+          description: err.message || "Gagal memperbarui konten bab."
+        });
+      }
     } finally {
       setIsGenerating(false);
     }
@@ -92,6 +104,10 @@ export default function ChatBar() {
           )}
         </button>
       </div>
+      <ModelLimitDialog 
+        isOpen={isRateLimitOpen} 
+        onOpenChange={setIsRateLimitOpen} 
+      />
     </div>
   );
 }

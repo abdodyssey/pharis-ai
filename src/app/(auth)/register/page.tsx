@@ -5,12 +5,14 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { registerSchema, RegisterFormValues } from "@/lib/validations/auth";
+import { useToastStore } from "@/store/useToastStore";
 import Link from "next/link";
 
 export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [globalError, setGlobalError] = useState<string | null>(null);
   const router = useRouter();
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     const checkUser = async () => {
@@ -45,7 +47,11 @@ export default function RegisterPage() {
     if (error) {
       setGlobalError(error.message);
     } else {
-      alert("Cek email kamu untuk konfirmasi pendaftaran!");
+      addToast({
+        type: "success",
+        message: "Registrasi Berhasil",
+        description: "Cek email kamu untuk konfirmasi pendaftaran!"
+      });
       router.push("/login");
     }
     setLoading(false);

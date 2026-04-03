@@ -12,12 +12,17 @@ import {
   Layers,
   Database
 } from "lucide-react";
+import { useToastStore } from "@/store/useToastStore";
+import DeleteConfirmationDialog from "@/components/shared/DeleteConfirmationDialog";
 
 export default function AllResearchPage() {
   const [sessions, setSessions] = useState<ResearchSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [targetId, setTargetId] = useState<string | null>(null);
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     const fetchAllSessions = async () => {
@@ -39,30 +44,48 @@ export default function AllResearchPage() {
     fetchAllSessions();
   }, []);
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const openDeleteDialog = (id: string, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    setTargetId(id);
+    setIsDeleteDialogOpen(true);
+  };
 
-    if (!confirm("Hapus riset ini secara permanen? Tindakan ini tidak dapat dibatalkan.")) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!targetId) return;
 
-    setDeletingId(id);
+    setDeletingId(targetId);
     try {
       const { error } = await supabase
         .from("research_sessions")
         .delete()
-        .eq("id", id);
+        .eq("id", targetId);
 
       if (error) {
-        alert("Gagal menghapus: " + error.message);
+        addToast({ 
+          type: "error", 
+          message: "Gagal Menghapus", 
+          description: error.message 
+        });
       } else {
-        setSessions(prev => prev.filter(s => s.id !== id));
+        setSessions(prev => prev.filter(s => s.id !== targetId));
+        addToast({ 
+          type: "success", 
+          message: "Data Berhasil Dihapus", 
+          description: "Riset telah dihapus secara permanen dari database." 
+        });
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      addToast({ 
+        type: "error", 
+        message: "Kesalahan Sistem", 
+        description: err.message || "Gagal menghapus riset." 
+      });
     } finally {
       setDeletingId(null);
+      setIsDeleteDialogOpen(false);
+      setTargetId(null);
     }
   };
 
@@ -143,7 +166,7 @@ export default function AllResearchPage() {
                     Step {session.current_step}/5
                   </span>
                   <button
-                    onClick={(e) => handleDelete(session.id, e)}
+                    onClick={(e) => openDeleteDialog(session.id, e)}
                     disabled={deletingId === session.id}
                     className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all opacity-0 group-hover:opacity-100 disabled:opacity-50"
                     title="Hapus Riset"
@@ -186,6 +209,12 @@ export default function AllResearchPage() {
           ))}
         </div>
       )}
+      <DeleteConfirmationDialog 
+        isOpen={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+        onConfirm={confirmDelete}
+        isLoading={deletingId !== null}
+      />
     </main>
   );
 }

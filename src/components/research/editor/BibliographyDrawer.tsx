@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { X, BookOpen, ExternalLink, Copy, Check } from "lucide-react";
+import { X, BookOpen, ExternalLink, Copy, Check, FileText } from "lucide-react";
 import { useResearchStore } from "@/store/useResearchStore";
 import { BibliographyEntry } from "@/types/research";
 
@@ -83,6 +83,32 @@ export default function BibliographyDrawer({ isOpen, onClose }: BibliographyDraw
                       <span className="inline-block px-2 py-0.5 bg-slate-100 text-[10px] font-bold text-slate-500 rounded-md">
                         {entry.year}
                       </span>
+                    )}
+                  </div>
+
+                  <div className="pt-2 flex flex-wrap items-center gap-2">
+                    {entry.doi && (
+                      <a 
+                        href={`https://doi.org/${entry.doi}`}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2 py-1 bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-900 rounded-md text-[10px] font-bold transition-all border border-transparent"
+                      >
+                        <span className="opacity-50 text-[9px]">DOI:</span>
+                        <span className="truncate max-w-[120px]">{entry.doi}</span>
+                      </a>
+                    )}
+
+                    {entry.full_paper_url && (
+                      <a 
+                        href={entry.full_paper_url}
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-1.5 px-2 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-600 hover:text-emerald-700 rounded-md text-[10px] font-bold transition-all border border-transparent"
+                      >
+                        <FileText size={10} />
+                        <span>PDF Available</span>
+                      </a>
                     )}
                   </div>
 

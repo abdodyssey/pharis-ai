@@ -1,12 +1,13 @@
-// src/components/research/Step3Structure.tsx
+"use client";
 import { useEffect, useState } from "react";
 import { useResearchStore } from "@/store/useResearchStore";
-import { supabase } from "@/lib/supabase";
 import { Loader2, Sparkles, Send, LayoutGrid } from "lucide-react";
+import { useToastStore } from "@/store/useToastStore";
 
 export default function Step3Structure() {
-  const { sessionId, sections, fetchSections } = useResearchStore();
+  const { sessionId, sections, fetchSections, initializeIMRADSections, nextStep } = useResearchStore();
   const [isInitializing, setIsInitializing] = useState(false);
+  const { addToast } = useToastStore();
 
   useEffect(() => {
     if (sessionId && sections.length === 0) {
@@ -18,30 +19,15 @@ export default function Step3Structure() {
     if (!sessionId) return;
     setIsInitializing(true);
     try {
-      const defaultSections = [
-        "Abstrak",
-        "Pendahuluan",
-        "Tinjauan Pustaka",
-        "Metodologi Penelitian",
-        "Hasil dan Pembahasan",
-        "Kesimpulan dan Saran",
-        "Daftar Pustaka",
-      ];
-
-      const sectionsToInsert = defaultSections.map((title, index) => ({
-        session_id: sessionId,
-        title,
-        content: "",
-        order_index: index,
-      }));
-
-      const { error } = await supabase.from("research_sections").insert(sectionsToInsert);
-      if (error) throw error;
-
-      await fetchSections(sessionId);
-    } catch (err) {
+      await initializeIMRADSections(sessionId);
+      await nextStep(); // Move automatically to Workspace Step 4
+    } catch (err: any) {
       console.error("Gagal inisialisasi bab:", err);
-      alert("Gagal menyiapkan struktur riset.");
+      addToast({
+        type: "error",
+        message: "Gagal Inisialisasi",
+        description: err.message || "Gagal menyiapkan struktur riset akademik."
+      });
     } finally {
       setIsInitializing(false);
     }

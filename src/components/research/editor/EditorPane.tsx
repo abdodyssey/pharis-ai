@@ -1,18 +1,102 @@
-// src/components/research/editor/EditorPane.tsx
 import { useResearchStore } from "@/store/useResearchStore";
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import { cn } from "@/lib/utils";
-import { Info, ShieldCheck } from "lucide-react";
+import { 
+  Info, 
+  ShieldCheck, 
+  Bold, 
+  Italic, 
+  Heading1, 
+  Heading2, 
+  Heading3, 
+  List, 
+  ListOrdered,
+  Type
+} from "lucide-react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Placeholder from "@tiptap/extension-placeholder";
+
+const MenuButton = ({ 
+  onClick, 
+  isActive, 
+  children, 
+  tooltip 
+}: { 
+  onClick: () => void, 
+  isActiveContent?: boolean,
+  isActive?: boolean, 
+  children: React.ReactNode,
+  tooltip: string 
+}) => (
+  <button
+    onClick={(e) => {
+      e.preventDefault();
+      onClick();
+    }}
+    className={cn(
+      "p-2 rounded-lg transition-all flex items-center justify-center gap-1.5",
+      isActive 
+        ? "bg-slate-900 text-white shadow-sm" 
+        : "text-slate-500 hover:bg-slate-100/80 hover:text-slate-900"
+    )}
+    title={tooltip}
+  >
+    {children}
+  </button>
+);
 
 export default function EditorPane() {
-  const { sections, activeSectionId, updateSectionInStore } = useResearchStore();
+  const { sections, activeSectionId, updateSectionInStore, saveSectionToDb } = useResearchStore();
   const activeSection = sections.find((s) => s.id === activeSectionId);
-  const [localContent, setLocalContent] = useState(activeSection?.content || "");
 
-  // Update local state when active section changes
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
+        },
+      }),
+      Placeholder.configure({
+        placeholder: "Tulis draf riset Anda di sini. Gunakan chat di bawah untuk bantuan AI berbasis data...",
+      }),
+    ],
+    content: activeSection?.content || "",
+    immediatelyRender: false,
+    onUpdate: ({ editor }) => {
+      const html = editor.getHTML();
+      if (activeSectionId) {
+        updateSectionInStore(activeSectionId, html);
+      }
+    },
+    editorProps: {
+      attributes: {
+        class: "focus:outline-none",
+      },
+    },
+  });
+
+  // Debounced Auto-save Effect
   useEffect(() => {
-    setLocalContent(activeSection?.content || "");
-  }, [activeSectionId, activeSection?.content]);
+    if (!activeSectionId || !activeSection?.content) return;
+
+    const timeout = setTimeout(() => {
+      saveSectionToDb(activeSectionId, activeSection.content);
+    }, 1500); // Debounce save to database
+
+    return () => clearTimeout(timeout);
+  }, [activeSection?.content, activeSectionId, saveSectionToDb]);
+
+  // Update editor content when active section changes or AI generates content
+  useEffect(() => {
+    if (editor && activeSection?.content !== undefined) {
+      const currentHTML = editor.getHTML();
+      if (activeSection.content !== currentHTML) {
+        // preserve selection if possible, otherwise set content
+        editor.commands.setContent(activeSection.content, { emitUpdate: false });
+      }
+    }
+  }, [activeSectionId, activeSection?.content, editor]);
 
   if (!activeSection) {
     return (
@@ -25,7 +109,7 @@ export default function EditorPane() {
   return (
     <div className="flex-1 flex flex-col bg-white overflow-hidden relative">
       {/* Top Header Section - Minimalist & Premium */}
-      <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-end">
+      <div className="px-10 py-8 border-b border-slate-50 flex justify-between items-end bg-white/80 backdrop-blur-sm z-10 shrink-0">
         <div className="space-y-1">
           <span className="text-[10px] font-bold tracking-[0.2em] uppercase text-slate-400">
             BAB {sections.findIndex(s => s.id === activeSectionId) + 1}
@@ -43,34 +127,94 @@ export default function EditorPane() {
         </div>
       </div>
 
+      {/* Editor Toolbar - Tailwind v4 styling */}
+      <div className="px-10 py-3 border-b border-slate-50 flex items-center gap-1 bg-white shrink-0 overflow-x-auto scrollbar-hide">
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleBold().run()} 
+          isActive={editor?.isActive('bold')}
+          tooltip="Tebal (Bold)"
+        >
+          <Bold size={18} />
+        </MenuButton>
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleItalic().run()} 
+          isActive={editor?.isActive('italic')}
+          tooltip="Miring (Italic)"
+        >
+          <Italic size={18} />
+        </MenuButton>
+
+        <div className="w-px h-6 bg-slate-200 mx-2" />
+
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()} 
+          isActive={editor?.isActive('heading', { level: 1 })}
+          tooltip="Heading 1"
+        >
+          <Heading1 size={18} />
+        </MenuButton>
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()} 
+          isActive={editor?.isActive('heading', { level: 2 })}
+          tooltip="Heading 2"
+        >
+          <Heading2 size={18} />
+        </MenuButton>
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleHeading({ level: 3 }).run()} 
+          isActive={editor?.isActive('heading', { level: 3 })}
+          tooltip="Heading 3"
+        >
+          <Heading3 size={18} />
+        </MenuButton>
+
+        <div className="w-px h-6 bg-slate-200 mx-2" />
+
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleBulletList().run()} 
+          isActive={editor?.isActive('bulletList')}
+          tooltip="List Peluru"
+        >
+          <List size={18} />
+        </MenuButton>
+        <MenuButton 
+          onClick={() => editor?.chain().focus().toggleOrderedList().run()} 
+          isActive={editor?.isActive('orderedList')}
+          tooltip="List Berurutan"
+        >
+          <ListOrdered size={18} />
+        </MenuButton>
+
+        <div className="w-px h-6 bg-slate-200 mx-2" />
+
+        <MenuButton 
+          onClick={() => editor?.chain().focus().setParagraph().run()} 
+          isActive={editor?.isActive('paragraph')}
+          tooltip="Teks Normal"
+        >
+          <Type size={18} />
+        </MenuButton>
+      </div>
+
       {/* Editor Canvas - Maximizing clean space for typography */}
       <div className="flex-1 overflow-y-auto p-12 bg-white relative scroll-smooth scrollbar-hide">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <textarea
-            className={cn(
-              "w-full h-full min-h-[600px] border-none focus:outline-none p-0 resize-none",
-              "text-slate-800 text-lg leading-relaxed placeholder:text-slate-200",
-              "font-serif antialiased"
-            )}
-            placeholder="Tulis draf riset Anda di sini. Gunakan chat di bawah untuk bantuan AI berbasis data..."
-            value={localContent}
-            onChange={(e) => {
-              setLocalContent(e.target.value);
-              updateSectionInStore(activeSection.id, e.target.value);
-            }}
-          />
+        <div className="max-w-4xl mx-auto">
+          <EditorContent editor={editor} />
         </div>
 
         {/* Sub-badge bottom markers */}
         <div className="max-w-4xl mx-auto mt-20 pt-8 border-t border-slate-50 flex justify-between items-center opacity-30">
           <div className="flex items-center gap-4 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-            <span>Editor Draft</span>
+            <span>Semantic Editor</span>
             <span>•</span>
-            <span>Real-time Sync</span>
+            <span>AI Powered</span>
+            <span>•</span>
+            <span>HTML Ready</span>
           </div>
-          <p className="text-[10px] text-slate-300 font-medium italic">Powered by Research-Builder Engine</p>
+          <p className="text-[10px] text-slate-300 font-medium italic">Standardized Journal Framework</p>
         </div>
       </div>
     </div>
   );
 }
+

@@ -6,7 +6,9 @@ import {
   ResearchSection,
   ResearchSession,
   ResearchStep,
+  TitleOption,
 } from "@/types/research";
+import { formatBibliographyToAPA } from "@/lib/bibliography-utils";
 
 interface ResearchState {
   // Core Data
@@ -19,6 +21,7 @@ interface ResearchState {
   bibliography: BibliographyEntry[];
   sections: ResearchSection[];
   activeSectionId: string | null;
+  titleOptions: TitleOption[];
   metadata?: Record<string, unknown>;
   isLoading: boolean;
   error: string | null;
@@ -39,14 +42,28 @@ interface ResearchState {
   fetchSections: (sessionId: string) => Promise<void>;
   setActiveSectionId: (id: string | null) => void;
   updateSectionInStore: (sectionId: string, content: string) => void;
+  saveSectionToDb: (sectionId: string, content: string) => Promise<void>;
   updateResearchData: (data: Partial<ResearchState>) => void;
+  initializeIMRADSections: (sessionId: string) => Promise<void>;
+  ensureIMRADStructure: () => Promise<void>;
+  syncBibliographyToSection: () => Promise<void>;
   saveToDb: () => Promise<void>;
   resetStore: () => void;
 }
 
+const FIXED_IMRAD = [
+  'Abstrak',
+  'Pendahuluan',
+  'Tinjauan Pustaka',
+  'Metode Penelitian',
+  'Hasil dan Pembahasan',
+  'Kesimpulan dan Saran',
+  'Daftar Pustaka'
+];
+
 export const useResearchStore = create<ResearchState>((set, get) => ({
   sessionId: null,
-  currentStep: 1, // 1: Idea, 2: Title/Obj, 3: Structure, 4: Review, 5: Export [cite: 19, 20, 21, 22, 33]
+  currentStep: 1, 
   topic: "",
   refinedTitle: "",
   objectives: [],
@@ -54,6 +71,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   bibliography: [],
   sections: [],
   activeSectionId: null,
+  titleOptions: [],
   metadata: {},
   isLoading: false,
   error: null,
@@ -87,6 +105,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       objectives: session.research_objectives || [],
       structure: session.academic_structure || {},
       bibliography: session.bibliography || [],
+      titleOptions: session.title_options || [],
       metadata: session.metadata || {},
       currentStep: session.current_step as ResearchStep,
       isLoading: false,
@@ -106,8 +125,11 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     if (!error && data) {
       set({ 
         sections: data as ResearchSection[],
-        activeSectionId: data[0]?.id || null 
       });
+      // Jika belum ada active section, set ke yang pertama
+      if (!get().activeSectionId && data.length > 0) {
+        set({ activeSectionId: data[0].id });
+      }
     }
   },
 
@@ -119,6 +141,17 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         s.id === sectionId ? { ...s, content } : s
       ),
     }));
+  },
+
+  saveSectionToDb: async (sectionId: string, content: string) => {
+    const { error } = await supabase
+      .from("research_sections")
+      .update({ content })
+      .eq("id", sectionId);
+
+    if (error) {
+      console.error("Gagal auto-save section:", error.message);
+    }
   },
 
   nextStep: async () => {
@@ -148,6 +181,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       objectives,
       structure,
       bibliography,
+      titleOptions,
       metadata,
     } = get();
 
@@ -161,6 +195,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         research_objectives: objectives,
         academic_structure: structure,
         bibliography: bibliography,
+        title_options: titleOptions,
         metadata: metadata,
         current_step: currentStep,
         updated_at: new Date().toISOString(),
@@ -170,6 +205,85 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
     if (error) {
       console.error("Expert Log: Sync to DB failed", error.message);
       set({ error: "Gagal menyimpan progres ke database." });
+    }
+  },
+
+  initializeIMRADSections: async (sessionId: string) => {
+    set({ isLoading: true, error: null });
+    
+    try {
+      const sectionsToInsert = FIXED_IMRAD.map((title, index) => ({
+        session_id: sessionId,
+        title,
+        content: "",
+        order_index: index,
+      }));
+
+      const { data, error } = await supabase
+        .from("research_sections")
+        .insert(sectionsToInsert)
+        .select();
+
+      if (error) throw error;
+
+      set({ 
+        sections: data as ResearchSection[],
+        currentStep: 3,
+        activeSectionId: data[0]?.id || null,
+        isLoading: false 
+      });
+      
+      await get().saveToDb();
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : String(err);
+      set({ error: errorMsg, isLoading: false });
+    }
+  },
+
+  ensureIMRADStructure: async () => {
+    const { sessionId, sections } = get();
+    if (!sessionId) return;
+
+    const missingTitles = FIXED_IMRAD.filter(
+      (title) => !sections.some((s) => s.title.toLowerCase() === title.toLowerCase())
+    );
+
+    if (missingTitles.length === 0) {
+      // Still sync bib if everything exists
+      await get().syncBibliographyToSection();
+      return;
+    }
+
+    const sectionsToInsert = missingTitles.map((title) => ({
+      session_id: sessionId,
+      title,
+      content: "",
+      order_index: FIXED_IMRAD.indexOf(title),
+    }));
+
+    const { error } = await supabase.from("research_sections").insert(sectionsToInsert);
+    if (!error) {
+      await get().fetchSections(sessionId);
+      await get().syncBibliographyToSection();
+    }
+  },
+
+  syncBibliographyToSection: async () => {
+    const { sessionId, bibliography, sections, updateSectionInStore, saveSectionToDb } = get();
+    if (!sessionId || bibliography.length === 0) return;
+
+    const bibSection = sections.find(
+      (s) => s.title.toLowerCase() === "daftar pustaka"
+    );
+
+    if (!bibSection) return;
+
+    const apaContent = formatBibliographyToAPA(bibliography);
+    
+    // Only update if content is currently empty OR truly different (to avoid loop or overwrite)
+    if (!bibSection.content || bibSection.content.length < 50) { 
+      updateSectionInStore(bibSection.id, apaContent);
+      await saveSectionToDb(bibSection.id, apaContent);
     }
   },
 
@@ -184,6 +298,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       bibliography: [],
       sections: [],
       activeSectionId: null,
+      titleOptions: [],
       metadata: {},
       isLoading: false,
       error: null,

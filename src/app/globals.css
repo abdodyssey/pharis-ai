@@ -41,3 +41,53 @@
     @apply bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-10 animate-fade-in-up;
   }
 }
+
+/* Tiptap Editor Styling - Jurnal Akademik Look */
+.ProseMirror {
+  outline: none !important;
+  @apply min-h-[600px] text-lg leading-relaxed text-slate-800 font-serif antialiased;
+}
+
+.ProseMirror p {
+  @apply mb-4 leading-relaxed;
+}
+
+.ProseMirror h1 {
+  @apply text-4xl font-bold mb-6 text-slate-900 border-b border-slate-100 pb-2;
+}
+
+.ProseMirror h2 {
+  @apply text-2xl font-bold mb-4 mt-8 text-slate-900;
+}
+
+.ProseMirror h3 {
+  @apply text-xl font-bold mb-3 mt-6 text-slate-800;
+}
+
+.ProseMirror ul {
+  @apply list-disc pl-6 mb-4 space-y-2;
+}
+
+.ProseMirror ol {
+  @apply list-decimal pl-6 mb-4 space-y-2;
+}
+
+.ProseMirror li {
+  @apply leading-relaxed;
+}
+
+.ProseMirror strong {
+  @apply font-bold text-slate-950;
+}
+
+.ProseMirror em {
+  @apply italic;
+}
+
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #adb5bd;
+  pointer-events: none;
+  height: 0;
+}
