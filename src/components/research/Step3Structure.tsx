@@ -1,81 +1,85 @@
 // src/components/research/Step3Structure.tsx
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useResearchStore } from "@/store/useResearchStore";
-import { callResearchAI } from "@/lib/ai-service";
-import { parseAcademicStructure } from "@/utils/parser";
+import { supabase } from "@/lib/supabase";
+import { Loader2, Sparkles, Send, LayoutGrid } from "lucide-react";
 
 export default function Step3Structure() {
-  const { refinedTitle, objectives, nextStep, updateResearchData, structure } =
-    useResearchStore();
-  const [isBuilding, setIsBuilding] = useState(false);
+  const { sessionId, sections, fetchSections } = useResearchStore();
+  const [isInitializing, setIsInitializing] = useState(false);
 
-  const handleBuildStructure = async () => {
-    setIsBuilding(true);
+  useEffect(() => {
+    if (sessionId && sections.length === 0) {
+      fetchSections(sessionId);
+    }
+  }, [sessionId, sections.length, fetchSections]);
+
+  const handleInitializeSections = async () => {
+    if (!sessionId) return;
+    setIsInitializing(true);
     try {
-      const context = `Judul: ${refinedTitle}. Tujuan: ${objectives.join(", ")}`;
-      const result = await callResearchAI(3, context);
-      const parsedStructure = parseAcademicStructure(result);
+      const defaultSections = [
+        "Abstrak",
+        "Pendahuluan",
+        "Tinjauan Pustaka",
+        "Metodologi Penelitian",
+        "Hasil dan Pembahasan",
+        "Kesimpulan dan Saran",
+        "Daftar Pustaka",
+      ];
 
-      updateResearchData({ structure: parsedStructure });
+      const sectionsToInsert = defaultSections.map((title, index) => ({
+        session_id: sessionId,
+        title,
+        content: "",
+        order_index: index,
+      }));
+
+      const { error } = await supabase.from("research_sections").insert(sectionsToInsert);
+      if (error) throw error;
+
+      await fetchSections(sessionId);
     } catch (err) {
-      console.error("Gagal membangun struktur:", err);
+      console.error("Gagal inisialisasi bab:", err);
+      alert("Gagal menyiapkan struktur riset.");
     } finally {
-      setIsBuilding(false);
+      setIsInitializing(false);
     }
   };
 
+  /**
+   * INITIALIZATION VIEW
+   * Clean and Minimalist view for first-time session creation
+   */
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold">Academic Structure Builder</h2>
-      <p className="text-gray-600 italic">
-        &qoute;Riset yang baik dimulai dari struktur berpikir yang jelas.&quote;
-        [cite: 15]
-      </p>
+    <div className="flex flex-col items-center justify-center py-20 min-h-[500px] border border-slate-100 rounded-[2.5rem] bg-white shadow-sm ring-1 ring-slate-50">
+      <div className="bg-slate-50 w-24 h-24 rounded-3xl flex items-center justify-center mb-8 rotate-3 shadow-inner ring-1 ring-slate-100">
+        <LayoutGrid className="text-blue-500" size={40} strokeWidth={1.5} />
+      </div>
+      
+      <div className="text-center space-y-3 max-w-sm">
+        <h3 className="text-2xl font-bold text-slate-900 tracking-tight">Siapkan Struktur Modular</h3>
+        <p className="text-slate-400 text-sm leading-relaxed">
+          PharisAI akan menyiapkan 7 bab standar riset sebagai dasar eksplorasi Anda.
+        </p>
+      </div>
 
-      {Object.keys(structure).length > 0 ? (
-        <div className="space-y-4">
-          {Object.entries(structure).map(([section, content]) => (
-            <details
-              key={section}
-              className="group border rounded-lg p-4 bg-gray-50"
-            >
-              <summary className="font-bold uppercase cursor-pointer flex justify-between">
-                {section}
-                <span className="text-blue-600 text-sm font-normal">
-                  Lihat Panduan
-                </span>
-              </summary>
-              <div className="mt-4 text-gray-700 whitespace-pre-line text-sm leading-relaxed">
-                {content as string}
-              </div>
-            </details>
-          ))}
-
-          <div className="pt-6">
-            <button
-              onClick={nextStep}
-              className="w-full bg-blue-600 text-white py-3 rounded-xl font-bold shadow-md"
-            >
-              Lanjut ke Review & Validasi Orisinalitas
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="border-2 border-dashed border-blue-200 rounded-2xl p-10 text-center">
-          <p className="mb-6 text-gray-500">
-            Klik tombol di bawah untuk membangun blueprint akademik lengkap.
-          </p>
-          <button
-            onClick={handleBuildStructure}
-            disabled={isBuilding}
-            className="bg-blue-600 text-white px-10 py-4 rounded-2xl font-bold hover:bg-blue-700 disabled:opacity-50 transition-all"
-          >
-            {isBuilding
-              ? "Menyusun Struktur..."
-              : "Generate Academic Blueprint"}
-          </button>
-        </div>
-      )}
+      <button
+        onClick={handleInitializeSections}
+        disabled={isInitializing}
+        className="mt-10 group bg-slate-900 text-white px-10 py-4 rounded-2xl font-bold hover:bg-black disabled:opacity-50 transition-all shadow-xl shadow-slate-200/50 flex items-center gap-3 border border-slate-800"
+      >
+        {isInitializing ? (
+          <Loader2 className="animate-spin" size={20} />
+        ) : (
+          <>
+            <Sparkles size={18} className="text-blue-400 group-hover:scale-125 transition-transform" />
+            <span>Bangun Kerangka Bab</span>
+            <Send size={14} className="opacity-40 group-hover:translate-x-1 transition-transform" />
+          </>
+        )}
+      </button>
     </div>
   );
 }
+

@@ -2,26 +2,28 @@
 import { useState } from "react";
 import { useResearchStore } from "@/store/useResearchStore";
 import { callResearchAI } from "@/lib/ai-service";
-import { parseAIResponse } from "@/utils/parser";
 
 export default function Step2TitleObjective() {
-  const { topic, nextStep, updateResearchData, refinedTitle, objectives } =
+  const { topic, nextStep, updateResearchData, refinedTitle, objectives, sessionId } =
     useResearchStore();
   const [isRefining, setIsRefining] = useState(false);
 
   const handleRefine = async () => {
     setIsRefining(true);
     try {
-      // Step 2: Rumuskan tujuan SMART & Judul
-      const result = await callResearchAI(2, topic);
-      const parsed = parseAIResponse(result);
-
-      updateResearchData({
-        refinedTitle: parsed.title,
-        objectives: parsed.objectives,
-      });
-    } catch (err) {
+      // Step 2: Rumuskan tujuan SMART & Judul (menggunakan sessionId yang sama)
+      const result = await callResearchAI(topic, sessionId);
+      
+      if (result.session) {
+        updateResearchData({
+          refinedTitle: result.session.refined_title || "",
+          objectives: result.session.research_objectives || [],
+          bibliography: result.session.bibliography || [],
+        });
+      }
+    } catch (err: any) {
       console.error("Gagal merumuskan tujuan:", err);
+      alert(err.message || "Gagal merumuskan tujuan riset.");
     } finally {
       setIsRefining(false);
     }

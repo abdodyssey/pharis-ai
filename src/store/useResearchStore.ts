@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { supabase } from "@/lib/supabase";
 import {
   AcademicStructure,
+  BibliographyEntry,
+  ResearchSection,
   ResearchSession,
   ResearchStep,
 } from "@/types/research";
@@ -14,6 +16,9 @@ interface ResearchState {
   refinedTitle: string;
   objectives: string[];
   structure: AcademicStructure;
+  bibliography: BibliographyEntry[];
+  sections: ResearchSection[];
+  activeSectionId: string | null;
   metadata?: Record<string, unknown>;
   isLoading: boolean;
   error: string | null;
@@ -31,6 +36,9 @@ interface ResearchState {
 
   // Database Operations
   fetchSession: (id: string) => Promise<void>;
+  fetchSections: (sessionId: string) => Promise<void>;
+  setActiveSectionId: (id: string | null) => void;
+  updateSectionInStore: (sectionId: string, content: string) => void;
   updateResearchData: (data: Partial<ResearchState>) => void;
   saveToDb: () => Promise<void>;
   resetStore: () => void;
@@ -43,6 +51,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
   refinedTitle: "",
   objectives: [],
   structure: {},
+  bibliography: [],
+  sections: [],
+  activeSectionId: null,
   metadata: {},
   isLoading: false,
   error: null,
@@ -75,10 +86,39 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       refinedTitle: session.refined_title || "",
       objectives: session.research_objectives || [],
       structure: session.academic_structure || {},
+      bibliography: session.bibliography || [],
       metadata: session.metadata || {},
       currentStep: session.current_step as ResearchStep,
       isLoading: false,
     });
+
+    // Also fetch sections automatically
+    get().fetchSections(session.id);
+  },
+
+  fetchSections: async (sessionId: string) => {
+    const { data, error } = await supabase
+      .from("research_sections")
+      .select("*")
+      .eq("session_id", sessionId)
+      .order("order_index", { ascending: true });
+
+    if (!error && data) {
+      set({ 
+        sections: data as ResearchSection[],
+        activeSectionId: data[0]?.id || null 
+      });
+    }
+  },
+
+  setActiveSectionId: (id) => set({ activeSectionId: id }),
+
+  updateSectionInStore: (sectionId, content) => {
+    set((state) => ({
+      sections: state.sections.map((s) =>
+        s.id === sectionId ? { ...s, content } : s
+      ),
+    }));
   },
 
   nextStep: async () => {
@@ -107,6 +147,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       refinedTitle,
       objectives,
       structure,
+      bibliography,
       metadata,
     } = get();
 
@@ -119,6 +160,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
         refined_title: refinedTitle,
         research_objectives: objectives,
         academic_structure: structure,
+        bibliography: bibliography,
         metadata: metadata,
         current_step: currentStep,
         updated_at: new Date().toISOString(),
@@ -139,6 +181,9 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       refinedTitle: "",
       objectives: [],
       structure: {},
+      bibliography: [],
+      sections: [],
+      activeSectionId: null,
       metadata: {},
       isLoading: false,
       error: null,
