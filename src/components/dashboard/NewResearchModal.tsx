@@ -268,7 +268,7 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
         {trigger}
       </Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 animate-in fade-in duration-300" />
+        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 animate-in fade-in duration-300" />
         <Dialog.Content 
           onPointerDownOutside={(e) => e.preventDefault()}
           onEscapeKeyDown={(e) => {
@@ -289,7 +289,7 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
             {step === 1 ? (
               <div className="space-y-10">
                 <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-600">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-900">
                     <BrainCircuit size={14} />
                     <span className="text-[10px] font-bold uppercase tracking-widest leading-none">New Research</span>
                   </div>
@@ -328,7 +328,7 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
                     value={topic}
                     onChange={(e) => setTopic(e.target.value)}
                     placeholder="Contoh: Pengaruh AI terhadap efisiensi penulisan jurnal mahasiswa tingkat akhir..."
-                    className="w-full bg-slate-50/50 rounded-2xl p-6 min-h-[220px] text-lg text-slate-800 placeholder-slate-300 border-none focus:ring-2 focus:ring-blue-100 transition-all resize-none"
+                    className="w-full bg-slate-50/50 rounded-2xl p-6 min-h-[220px] text-lg text-slate-800 placeholder-slate-300 border-none focus:ring-2 focus:ring-slate-200 transition-all resize-none"
                     disabled={isGenerating}
                   />
                   
@@ -339,8 +339,8 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
                       className={cn(
                         "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95",
                         isGenerating 
-                          ? "bg-blue-600 text-white" 
-                          : "bg-slate-900 text-white hover:bg-slate-800"
+                          ? "bg-slate-800 text-white" 
+                          : "bg-slate-900 text-white hover:bg-black"
                       )}
                     >
                       {isGenerating ? (
@@ -361,7 +361,7 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
             ) : (
               <div className="space-y-8">
                 <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-900">
                     <Sparkles size={14} />
                     <span className="text-[10px] font-bold uppercase tracking-widest leading-none">Title Selection</span>
                   </div>
@@ -401,18 +401,18 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
                       className={cn(
                         "text-left p-6 rounded-2xl border-2 transition-all group relative overflow-hidden",
                         selectedIdx === i 
-                          ? "border-blue-600 bg-blue-50/30" 
-                          : "border-slate-100 hover:border-blue-200 bg-white"
+                          ? "border-slate-900 bg-slate-50" 
+                          : "border-slate-100 hover:border-slate-200 bg-white"
                       )}
                     >
                       <div className="flex gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
                           {i === 0 && <Target size={20} />}
                           {i === 1 && <Lightbulb size={20} />}
                           {i === 2 && <Sparkles size={20} />}
                         </div>
                         <div className="space-y-2">
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 transition-colors leading-snug">
+                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-black transition-colors leading-snug">
                             {option.title}
                           </h3>
                           <p className="text-sm text-slate-500 leading-relaxed">
@@ -426,8 +426,8 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
 
                 {isGenerating && (
                   <div className="flex flex-col items-center gap-3 py-4 animate-in fade-in duration-500">
-                    <div className="w-10 h-10 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-blue-600 animate-pulse">{step2LoadingMessages[loadingIndex]}</p>
+                    <div className="w-10 h-10 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
+                    <p className="text-sm font-bold text-slate-600 animate-pulse">{step2LoadingMessages[loadingIndex]}</p>
                   </div>
                 )}
               </div>
@@ -436,7 +436,7 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
             {/* Shimmer overlay (during generation) */}
             {isGenerating && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2.5rem]">
-                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-blue-50/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-slate-100/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
               </div>
             )}
 

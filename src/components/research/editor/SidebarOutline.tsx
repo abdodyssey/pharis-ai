@@ -38,7 +38,7 @@ export default function SidebarOutline() {
                 className={cn(
                   "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 rounded-lg flex items-center gap-3 group relative overflow-hidden",
                   isActive
-                    ? "bg-white text-blue-600 shadow-sm ring-1 ring-slate-200/50 font-semibold"
+                    ? "bg-slate-100 text-slate-900 shadow-sm border-l-4 border-slate-900 font-bold"
                     : isMissing
                     ? "text-slate-300 hover:bg-white hover:text-slate-900 group"
                     : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm"
@@ -47,7 +47,7 @@ export default function SidebarOutline() {
                 <span className={cn(
                   "text-[10px] w-6 h-6 rounded-md flex items-center justify-center border transition-colors shrink-0",
                   isActive 
-                    ? "bg-blue-50 border-blue-100 text-blue-600" 
+                    ? "bg-slate-900 border-slate-900 text-white" 
                     : "bg-slate-100 border-slate-200 text-slate-400 group-hover:border-slate-300"
                 )}>
                   {index + 1}
@@ -64,8 +64,8 @@ export default function SidebarOutline() {
 
                 {hasContent && (
                   <div className="ml-auto flex items-center gap-1.5">
-                    <Sparkles size={10} className="text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Circle className="text-blue-500 fill-blue-500" size={6} />
+                    <Sparkles size={10} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <Circle className="text-slate-900 fill-slate-900" size={6} />
                   </div>
                 )}
                 
@@ -80,13 +80,13 @@ export default function SidebarOutline() {
       
       <div className="mt-auto p-6 border-t border-slate-200/40 bg-white/40">
         <div className="text-[9px] font-black text-slate-450 uppercase tracking-[0.2em] mb-2 px-1">AI Grounding</div>
-        <div className="flex items-center gap-3 p-3 bg-blue-50/50 rounded-xl border border-blue-100/50">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white shrink-0 shadow-sm shadow-blue-100">
+        <div className="flex items-center gap-3 p-3 bg-slate-100/50 rounded-xl border border-slate-200/50">
+          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-sm">
             <FileSearch size={14} />
           </div>
           <div className="space-y-0.5">
             <div className="text-[10px] font-bold text-slate-900">RAG Analysis</div>
-            <div className="text-[9px] text-blue-600/70 font-semibold uppercase tracking-widest">Bibliography Active</div>
+            <div className="text-[9px] text-slate-500 font-semibold uppercase tracking-widest">Bibliography Active</div>
           </div>
         </div>
       </div>

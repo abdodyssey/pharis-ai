@@ -120,10 +120,10 @@ export default function EditorPane() {
         </div>
         
         {/* Grounding Badge */}
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-blue-50/50 border border-blue-100 rounded-full group cursor-help transition-all hover:bg-blue-50">
-          <ShieldCheck size={14} className="text-blue-600" />
-          <span className="text-[10px] font-bold text-blue-700 tracking-wider">GROUNDING: ENABLED</span>
-          <Info size={10} className="text-blue-400 group-hover:text-blue-500" />
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 border border-slate-200 rounded-full group cursor-help transition-all hover:bg-slate-200">
+          <ShieldCheck size={14} className="text-slate-900" />
+          <span className="text-[10px] font-bold text-slate-900 tracking-wider">GROUNDING: ENABLED</span>
+          <Info size={10} className="text-slate-400 group-hover:text-slate-900" />
         </div>
       </div>
 

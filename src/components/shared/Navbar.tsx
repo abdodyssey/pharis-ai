@@ -63,14 +63,14 @@ export default function Navbar() {
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
             <Link href="/dashboard" className="flex items-center gap-2 group">
-              <div className="w-8 h-8 bg-linear-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-blue-200 group-hover:scale-110 transition-transform">
+              <div className="w-8 h-8 bg-linear-to-br from-slate-900 to-slate-800 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
                 P
               </div>
-              <span className="text-xl font-extrabold bg-clip-text text-transparent bg-linear-to-r from-blue-600 to-indigo-600 tracking-tight">
+              <span className="text-xl font-extrabold text-slate-900 tracking-tight">
                 PharisAI
               </span>
             </Link>
-            <span className="px-2 py-0.5 rounded-full bg-blue-50 text-[10px] font-bold text-blue-600 border border-blue-100 uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 border border-slate-200 uppercase tracking-wider">
               Beta
             </span>
           </div>

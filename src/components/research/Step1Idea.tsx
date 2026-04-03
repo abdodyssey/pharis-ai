@@ -55,25 +55,28 @@ export default function Step1Idea() {
         return;
       }
 
-      if (result.session) {
+      if (result.data?.session) {
         updateResearchData({
-          sessionId: result.session.id,
-          titleOptions: result.session.title_options || [],
-          bibliography: result.session.bibliography || [],
+          sessionId: result.data.session.id,
+          titleOptions: result.data.session.title_options || [],
+          bibliography: result.data.session.bibliography || [],
           currentStep: 2,
         });
       }
 
       nextStep();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.status === 429) {
+      const errorMessage = err instanceof Error ? err.message : "Kesalahan Sistem";
+      const status = (err as { status?: number })?.status;
+
+      if (status === 429) {
         setIsRateLimitOpen(true);
       } else {
         addToast({ 
           type: "error", 
           message: "Kesalahan Sistem", 
-          description: err.message || "Terjadi kesalahan sistem saat memproses ide." 
+          description: errorMessage 
         });
       }
     } finally {
@@ -86,12 +89,12 @@ export default function Step1Idea() {
       <div className="w-full max-w-2xl space-y-12">
         {/* Header Section */}
         <div className="space-y-4 text-center">
-          <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-blue-50 border border-blue-100/50">
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-600">
+          <div className="inline-flex items-center gap-3 px-3 py-1 rounded-full bg-slate-100 border border-slate-200/50">
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-900">
               Phase 01
             </span>
-            <div className="w-1 h-1 rounded-full bg-blue-400/50" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-blue-400">
+            <div className="w-1 h-1 rounded-full bg-slate-400/50" />
+            <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400">
               Research Idea
             </span>
           </div>
@@ -108,13 +111,13 @@ export default function Step1Idea() {
           {/* Animated Glow Border (visible only during generation) */}
           <div 
             className={cn(
-              "absolute -inset-[2px] rounded-[2rem] bg-linear-to-r from-blue-600 via-indigo-500 to-emerald-400 opacity-0 blur-md transition-all duration-1000",
+              "absolute -inset-[2px] rounded-[2rem] bg-linear-to-r from-slate-900 via-slate-600 to-slate-400 opacity-0 blur-md transition-all duration-1000",
               isGenerating && "opacity-40 animate-pulse scale-[1.01]"
             )} 
           />
 
           {/* Main Card */}
-          <div className="relative bg-white border border-slate-100 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-500 group-focus-within:shadow-[0_20px_50px_rgba(37,99,235,0.08)] group-focus-within:border-blue-100/50">
+          <div className="relative bg-white border border-slate-100 rounded-[2rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all duration-500 group-focus-within:shadow-[0_20px_50px_rgba(0,0,0,0.08)] group-focus-within:border-slate-200/50">
             <div className="p-8 md:p-10 space-y-6">
               <div className="relative">
                 <textarea
@@ -140,7 +143,7 @@ export default function Step1Idea() {
                   disabled={!mounted || isGenerating || !topic}
                   className={cn(
                     "relative group flex items-center gap-3 px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold transition-all active:scale-95 disabled:opacity-30 disabled:pointer-events-none hover:bg-black hover:shadow-xl hover:shadow-slate-200",
-                    isGenerating && "bg-blue-600"
+                    isGenerating && "bg-slate-800"
                   )}
                 >
                   {isGenerating ? (
@@ -161,7 +164,7 @@ export default function Step1Idea() {
             {/* Shimmer overlay (during generation) */}
             {isGenerating && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2rem]">
-                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-blue-50/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
+                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-slate-100/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
               </div>
             )}
           </div>
@@ -170,7 +173,7 @@ export default function Step1Idea() {
         {/* Support Note */}
         <div className="flex justify-center gap-8 opacity-40 grayscale hover:grayscale-0 transition-all duration-700">
            <div className="flex items-center gap-2">
-              <Sparkles className="w-4 h-4 text-blue-600" />
+              <Sparkles className="w-4 h-4 text-slate-900" />
               <span className="text-[10px] font-black uppercase tracking-[0.3em]">Semantic Scholar</span>
            </div>
            <div className="flex items-center gap-2">

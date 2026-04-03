@@ -5,7 +5,7 @@ import { useResearchStore } from "@/store/useResearchStore";
 import { callResearchAI } from "@/lib/ai-service";
 import { useToastStore } from "@/store/useToastStore";
 import ModelLimitDialog from "@/components/shared/ModelLimitDialog";
-import { Check, Lightbulb, Target, Sparkles, ArrowRight } from "lucide-react";
+import { Lightbulb, Target, Sparkles, ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const loadingMessages = [
@@ -62,28 +62,32 @@ export default function Step2TitleObjective() {
           message: "Gagal memproses draf", 
           description: result.error 
         });
+        setIsGenerating(false);
         return;
       }
 
-      if (result.session) {
+      if (result.data?.session) {
         updateResearchData({
-          refinedTitle: result.session.refined_title,
-          objectives: result.session.research_objectives || [],
+          refinedTitle: result.data.session.refined_title,
+          objectives: result.data.session.research_objectives || [],
           currentStep: 3,
         });
         // fetchSession handles sections automatically if needed, 
         // but since we inserted them in Edge Function, nextStep will move us to Workspace
         nextStep();
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      if (err.status === 429) {
+      const errorMessage = err instanceof Error ? err.message : "Kesalahan Sistem";
+      const status = (err as { status?: number })?.status;
+
+      if (status === 429) {
         setIsRateLimitOpen(true);
       } else {
         addToast({ 
           type: "error", 
           message: "Kesalahan Sistem", 
-          description: err.message || "Terjadi kesalahan saat membuat draf." 
+          description: errorMessage 
         });
       }
     } finally {
@@ -95,9 +99,9 @@ export default function Step2TitleObjective() {
     return (
       <div className="flex flex-col items-center justify-center py-20 space-y-8 animate-in fade-in duration-500">
         <div className="relative">
-          <div className="w-20 h-20 border-4 border-blue-600/10 border-t-blue-600 rounded-full animate-spin" />
+          <div className="w-20 h-20 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
           <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-blue-600 animate-pulse" />
+            <Sparkles className="w-8 h-8 text-slate-900 animate-pulse" />
           </div>
         </div>
         <div className="text-center space-y-2">
@@ -113,9 +117,9 @@ export default function Step2TitleObjective() {
   return (
     <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-blue-600 mb-1">
-          <span className="text-xs font-bold uppercase tracking-widest text-blue-500/60 text-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">Phase 02</span>
-          <div className="h-px w-8 bg-blue-100" />
+        <div className="flex items-center gap-2 text-slate-900 mb-1">
+          <span className="text-xs font-black uppercase tracking-widest text-slate-900/60">Phase 02</span>
+          <div className="h-px w-8 bg-slate-200" />
         </div>
         <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
           Pilih Arah Judul Penelitian
@@ -131,16 +135,16 @@ export default function Step2TitleObjective() {
             key={i}
             onClick={() => !isGenerating && handleSelectTitle(i)}
             className={cn(
-              "group relative p-8 bg-white border-2 rounded-[2rem] transition-all cursor-pointer hover:shadow-2xl hover:shadow-blue-500/10 active:scale-[0.99]",
+              "group relative p-8 bg-white border-2 rounded-[2rem] transition-all cursor-pointer hover:shadow-2xl hover:shadow-slate-200/50 active:scale-[0.99]",
               selectedIdx === i 
-                ? "border-blue-600 ring-4 ring-blue-50 shadow-xl" 
-                : "border-slate-100 hover:border-blue-200"
+                ? "border-slate-900 ring-4 ring-slate-100 shadow-xl" 
+                : "border-slate-100 hover:border-slate-200"
             )}
           >
             <div className="flex flex-col md:flex-row gap-8">
               <div className="flex-1 space-y-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-900 flex items-center justify-center shrink-0">
                     {i === 0 && <Target size={20} />}
                     {i === 1 && <Lightbulb size={20} />}
                     {i === 2 && <Sparkles size={20} />}
@@ -151,16 +155,16 @@ export default function Step2TitleObjective() {
                 </div>
 
                 <div className="space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight group-hover:text-blue-600 transition-colors">
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight group-hover:text-black transition-colors">
                     {option.title}
                   </h3>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
                   <div className="space-y-2">
-                    <span className="text-[10px] font-black text-indigo-500 uppercase tracking-[0.2em]">Research Gap</span>
+                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Research Gap</span>
                     <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                      {option.research_gap}
+                      {option.gap}
                     </p>
                   </div>
                   <div className="space-y-2">
@@ -173,12 +177,12 @@ export default function Step2TitleObjective() {
               </div>
 
               <div className="md:w-48 flex items-center justify-center">
-                 <div className={cn(
-                   "w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all",
-                   selectedIdx === i 
-                     ? "bg-blue-600 text-white shadow-lg" 
-                     : "bg-slate-50 text-slate-400 group-hover:bg-blue-50 group-hover:text-blue-600"
-                 )}>
+                  <div className={cn(
+                    "w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all",
+                    selectedIdx === i 
+                      ? "bg-slate-900 text-white shadow-lg" 
+                      : "bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-900"
+                  )}>
                    Pilih Judul
                    <ArrowRight size={18} />
                  </div>

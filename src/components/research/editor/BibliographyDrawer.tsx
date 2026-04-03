@@ -27,7 +27,7 @@ export default function BibliographyDrawer({ isOpen, onClose }: BibliographyDraw
     <div className="fixed inset-0 z-100 flex items-center justify-end">
       {/* Backdrop */}
       <div 
-        className="absolute inset-0 bg-slate-950/20 backdrop-blur-sm animate-in fade-in duration-300"
+        className="absolute inset-0 bg-black/20 backdrop-blur-sm animate-in fade-in duration-300"
         onClick={onClose}
       />
       
@@ -36,7 +36,7 @@ export default function BibliographyDrawer({ isOpen, onClose }: BibliographyDraw
         {/* Header */}
         <div className="px-6 py-5 border-b border-slate-200 flex justify-between items-center bg-white sticky top-0 z-10">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-50 text-blue-600 rounded-lg flex items-center justify-center">
+            <div className="w-9 h-9 bg-slate-100 text-slate-900 rounded-lg flex items-center justify-center">
               <BookOpen size={18} />
             </div>
             <div>
@@ -68,10 +68,10 @@ export default function BibliographyDrawer({ isOpen, onClose }: BibliographyDraw
             bibliography.map((entry, index) => (
               <div 
                 key={index} 
-                className="group bg-white p-5 rounded-2xl border border-slate-200 hover:border-blue-200 hover:shadow-md transition-all duration-300"
+                className="group bg-white p-5 rounded-2xl border border-slate-200 hover:border-slate-300 hover:shadow-md transition-all duration-300"
               >
                 <div className="space-y-3">
-                  <h4 className="text-sm font-bold text-slate-950 leading-snug group-hover:text-blue-700 transition-colors">
+                  <h4 className="text-sm font-bold text-slate-950 leading-snug group-hover:text-black transition-colors">
                     {entry.title}
                   </h4>
                   
@@ -117,7 +117,7 @@ export default function BibliographyDrawer({ isOpen, onClose }: BibliographyDraw
                       href={entry.url} 
                       target="_blank" 
                       rel="noopener noreferrer"
-                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-blue-50 text-slate-600 hover:text-blue-600 rounded-xl text-xs font-bold transition-all border border-transparent hover:border-blue-100"
+                      className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-slate-50 hover:bg-slate-100 text-slate-900 rounded-xl text-xs font-bold transition-all border border-slate-200 hover:border-slate-300"
                     >
                       <ExternalLink size={14} />
                       <span>Buka Sumber</span>

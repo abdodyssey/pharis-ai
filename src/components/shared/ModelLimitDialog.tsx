@@ -36,8 +36,8 @@ export default function ModelLimitDialog({
         </DialogHeader>
 
         <div className="grid grid-cols-1 gap-4 py-6 px-2">
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-blue-50/50 border border-blue-100/30">
-            <div className="w-10 h-10 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center shrink-0">
               <Clock size={20} />
             </div>
             <div>
@@ -46,8 +46,8 @@ export default function ModelLimitDialog({
             </div>
           </div>
           
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-indigo-50/50 border border-indigo-100/30">
-            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-600 flex items-center justify-center shrink-0">
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+            <div className="w-10 h-10 rounded-xl bg-slate-100 text-slate-900 flex items-center justify-center shrink-0">
               <Zap size={20} />
             </div>
             <div>

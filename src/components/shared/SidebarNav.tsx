@@ -45,11 +45,11 @@ export default function SidebarNav() {
               href={item.href}
               className={`flex items-center gap-3 px-4 py-3 rounded-xl font-semibold transition-all group ${
                 isActive 
-                  ? "bg-blue-600 text-white shadow-lg shadow-blue-100" 
+                  ? "bg-slate-100 text-slate-900 border-l-4 border-slate-900 rounded-r-xl rounded-l-none" 
                   : "text-slate-500 hover:bg-slate-200/50 hover:text-slate-800"
               }`}
             >
-              <item.icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400 group-hover:text-slate-600"}`} />
+              <item.icon className={`w-5 h-5 ${isActive ? "text-slate-900" : "text-slate-400 group-hover:text-slate-600"}`} />
               {item.name}
             </Link>
           );

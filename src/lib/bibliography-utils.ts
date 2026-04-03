@@ -16,7 +16,7 @@ export function formatBibliographyToAPA(bibliography: BibliographyEntry[]): stri
     return `<li class="mb-4 text-slate-700 leading-relaxed">
       <span class="font-bold">${authors}</span> ${year}. 
       <span class="italic">${title}</span>. 
-      <a href="${link}" target="_blank" class="text-blue-600 hover:underline break-all">${link}</a>
+      <a href="${link}" target="_blank" class="text-slate-900 font-medium hover:underline break-all">${link}</a>
     </li>`;
   });
 

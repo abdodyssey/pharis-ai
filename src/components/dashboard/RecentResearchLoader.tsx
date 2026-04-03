@@ -25,12 +25,12 @@ export default async function RecentResearchLoader() {
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-indigo-500" />
+          <BarChart3 className="w-5 h-5 text-slate-900" />
           Lanjutkan Riset Terakhir
         </h2>
         <Link
           href="/dashboard/all"
-          className="text-sm font-bold text-indigo-600 hover:text-indigo-700 flex items-center gap-1 group transition-colors"
+          className="text-sm font-bold text-slate-900 hover:text-black flex items-center gap-1 group transition-colors"
         >
           Lihat Semua Riset
           <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -53,7 +53,7 @@ export default async function RecentResearchLoader() {
             <Link
               key={session.id}
               href={`/research/${session.id}`}
-              className="group p-6 bg-white border border-slate-200/60 rounded-2xl hover:border-indigo-200 hover:shadow-xl hover:shadow-indigo-500/5 transition-all flex flex-col h-full border-b-4 border-b-slate-100 hover:border-b-indigo-500"
+              className="group p-6 bg-white border border-slate-200/60 rounded-2xl hover:border-slate-300 hover:shadow-xl hover:shadow-slate-200/50 transition-all flex flex-col h-full border-b-4 border-b-slate-100 hover:border-b-slate-900"
             >
               <div className="flex-1 space-y-3">
                 <div className="flex items-center justify-between">
@@ -68,7 +68,7 @@ export default async function RecentResearchLoader() {
                     })}
                   </span>
                 </div>
-                <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-tight group-hover:text-black transition-colors">
                   {session.refined_title || session.initial_topic || "Tanpa Judul"}
                 </h3>
               </div>
@@ -77,7 +77,7 @@ export default async function RecentResearchLoader() {
                 <div className="flex items-center gap-3">
                   <div className="h-2 w-24 bg-slate-100 rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-indigo-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-slate-900 rounded-full transition-all duration-1000"
                       style={{ width: `${(session.current_step / 5) * 100}%` }}
                     ></div>
                   </div>
@@ -85,7 +85,7 @@ export default async function RecentResearchLoader() {
                     Step {session.current_step}/5
                   </span>
                 </div>
-                <div className="bg-slate-50 group-hover:bg-indigo-50 p-2 rounded-xl text-slate-400 group-hover:text-indigo-600 transition-colors">
+                <div className="bg-slate-50 group-hover:bg-slate-100 p-2 rounded-xl text-slate-400 group-hover:text-slate-900 transition-colors">
                   <ArrowRight className="w-4 h-4" />
                 </div>
               </div>

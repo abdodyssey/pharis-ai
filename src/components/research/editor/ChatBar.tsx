@@ -4,7 +4,7 @@ import { useResearchStore } from "@/store/useResearchStore";
 import { useToastStore } from "@/store/useToastStore";
 import ModelLimitDialog from "@/components/shared/ModelLimitDialog";
 import { supabase } from "@/lib/supabase";
-import { Send, Loader2, Sparkles, Wand2 } from "lucide-react";
+import { Loader2, Sparkles, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export default function ChatBar() {
@@ -43,15 +43,18 @@ export default function ChatBar() {
         updateSectionInStore(activeSectionId, data.content);
         setQuery("");
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Full Error Object:", err);
-      if (err.status === 429 || err.message?.includes("429")) {
+      const errorMessage = err instanceof Error ? err.message : "Unknown error";
+      const status = (err as { status?: number })?.status;
+
+      if (status === 429 || errorMessage?.includes("429")) {
         setIsRateLimitOpen(true);
       } else {
         addToast({
           type: "error",
           message: "AI Research Bot Error",
-          description: err.message || "Gagal memperbarui konten bab."
+          description: errorMessage
         });
       }
     } finally {
@@ -63,10 +66,10 @@ export default function ChatBar() {
     <div className="fixed bottom-10 left-[calc(50%+144px)] -translate-x-1/2 w-full max-w-2xl px-6 z-50">
       <div className={cn(
         "flex items-center gap-3 p-2 bg-white/70 backdrop-blur-xl border border-white/50 shadow-2xl rounded-2xl ring-1 ring-slate-900/5 transition-all duration-300",
-        isGenerating && "ring-blue-500/20 shadow-blue-500/5 bg-white/80"
+        isGenerating && "ring-slate-900/10 shadow-slate-900/5 bg-white/80"
       )}>
         <div className="pl-3 py-1 flex items-center gap-2 group cursor-help shrink-0">
-          <Wand2 className="text-blue-500 group-hover:scale-110 transition-transform" size={16} />
+          <Wand2 className="text-slate-900 group-hover:scale-110 transition-transform" size={16} />
           <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:inline-block">AI Research Bot</span>
         </div>
         

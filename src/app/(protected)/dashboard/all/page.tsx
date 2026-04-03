@@ -75,12 +75,13 @@ export default function AllResearchPage() {
           description: "Riset telah dihapus secara permanen dari database." 
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
+      const errorMessage = err instanceof Error ? err.message : "Kesalahan Sistem";
       addToast({ 
         type: "error", 
         message: "Kesalahan Sistem", 
-        description: err.message || "Gagal menghapus riset." 
+        description: errorMessage || "Gagal menghapus riset." 
       });
     } finally {
       setDeletingId(null);
@@ -102,7 +103,7 @@ export default function AllResearchPage() {
       <div className="space-y-4">
         <Link 
           href="/dashboard" 
-          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors group"
+          className="inline-flex items-center gap-2 text-sm font-bold text-slate-500 hover:text-slate-900 transition-colors group"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           Kembali ke Overview
@@ -114,13 +115,13 @@ export default function AllResearchPage() {
           
           {/* Search Bar */}
           <div className="relative w-full md:w-80 group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-slate-900 transition-colors" />
             <input 
               type="text"
               placeholder="Cari judul riset..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all font-medium text-slate-700"
+              className="w-full pl-11 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-900/10 focus:border-slate-900 transition-all font-medium text-slate-700"
             />
           </div>
         </div>
@@ -157,7 +158,7 @@ export default function AllResearchPage() {
           {filteredSessions.map((session) => (
             <div 
               key={session.id}
-              className="group relative flex flex-col p-6 bg-white border border-slate-200/70 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all"
+              className="group relative flex flex-col p-6 bg-white border border-slate-200/70 rounded-2xl shadow-sm hover:shadow-xl hover:shadow-slate-200/50 hover:-translate-y-1 transition-all"
             >
               <div className="flex-1 space-y-4">
                 <div className="flex items-center justify-between">
@@ -179,7 +180,7 @@ export default function AllResearchPage() {
                   </button>
                 </div>
 
-                <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-tight group-hover:text-indigo-600 transition-colors">
+                <h3 className="text-lg font-bold text-slate-800 line-clamp-2 leading-tight group-hover:text-black transition-colors">
                   {session.refined_title || session.initial_topic || "Tanpa Judul"}
                 </h3>
 
@@ -200,7 +201,7 @@ export default function AllResearchPage() {
 
               <Link
                 href={`/research/${session.id}`}
-                className="mt-8 flex items-center justify-center gap-2 w-full py-3 bg-slate-50 group-hover:bg-indigo-600 text-slate-600 group-hover:text-white rounded-xl font-bold transition-all"
+                className="mt-8 flex items-center justify-center gap-2 w-full py-3 bg-slate-50 group-hover:bg-slate-900 text-slate-600 group-hover:text-white rounded-xl font-bold transition-all"
               >
                 Lanjutkan
                 <ExternalLink className="w-4 h-4" />

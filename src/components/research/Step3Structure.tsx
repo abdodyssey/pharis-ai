@@ -21,12 +21,13 @@ export default function Step3Structure() {
     try {
       await initializeIMRADSections(sessionId);
       await nextStep(); // Move automatically to Workspace Step 4
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Gagal inisialisasi bab:", err);
+      const errorMessage = err instanceof Error ? err.message : "Kesalahan Sistem";
       addToast({
         type: "error",
         message: "Gagal Inisialisasi",
-        description: err.message || "Gagal menyiapkan struktur riset akademik."
+        description: errorMessage || "Gagal menyiapkan struktur riset akademik."
       });
     } finally {
       setIsInitializing(false);
@@ -40,7 +41,7 @@ export default function Step3Structure() {
   return (
     <div className="flex flex-col items-center justify-center py-20 min-h-[500px] border border-slate-100 rounded-[2.5rem] bg-white shadow-sm ring-1 ring-slate-50">
       <div className="bg-slate-50 w-24 h-24 rounded-3xl flex items-center justify-center mb-8 rotate-3 shadow-inner ring-1 ring-slate-100">
-        <LayoutGrid className="text-blue-500" size={40} strokeWidth={1.5} />
+        <LayoutGrid className="text-slate-900" size={40} strokeWidth={1.5} />
       </div>
       
       <div className="text-center space-y-3 max-w-sm">
@@ -59,7 +60,7 @@ export default function Step3Structure() {
           <Loader2 className="animate-spin" size={20} />
         ) : (
           <>
-            <Sparkles size={18} className="text-blue-400 group-hover:scale-125 transition-transform" />
+            <Sparkles size={18} className="text-slate-400 group-hover:scale-125 transition-transform" />
             <span>Bangun Kerangka Bab</span>
             <Send size={14} className="opacity-40 group-hover:translate-x-1 transition-transform" />
           </>

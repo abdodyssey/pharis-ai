@@ -30,14 +30,14 @@ export default async function DashboardStatsLoader() {
     .eq("current_step", 5);
 
   const stats = [
-    { label: "Total Riset", value: totalCount || 0, icon: <FileText className="w-6 h-6" />, color: "blue" },
-    { label: "Progres Riset", value: ongoingCount || 0, icon: <Clock className="w-6 h-6" />, color: "indigo" },
+    { label: "Total Riset", value: totalCount || 0, icon: <FileText className="w-6 h-6" />, color: "slateDark" },
+    { label: "Progres Riset", value: ongoingCount || 0, icon: <Clock className="w-6 h-6" />, color: "slateLight" },
     { label: "Selesai", value: completedCount || 0, icon: <CheckCircle2 className="w-6 h-6" />, color: "emerald" },
   ];
 
   const colorMap = {
-    blue: "bg-blue-50 text-blue-600 border-blue-100",
-    indigo: "bg-indigo-50 text-indigo-600 border-indigo-100",
+    slateDark: "bg-slate-900 text-white border-slate-900",
+    slateLight: "bg-slate-100 text-slate-900 border-slate-200",
     emerald: "bg-emerald-50 text-emerald-600 border-emerald-100",
   };
 

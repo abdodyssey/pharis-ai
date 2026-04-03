@@ -109,7 +109,7 @@ export default function ModularEditorWorkspace() {
               {refinedTitle || "Penelitian Tanpa Judul"}
             </h2>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-black text-blue-600 uppercase tracking-[0.2em]">Workspace V2.5</span>
+              <span className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">Workspace V2.5</span>
               <div className="w-1 h-1 rounded-full bg-slate-200" />
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Autosave Active</span>
             </div>
@@ -139,7 +139,7 @@ export default function ModularEditorWorkspace() {
             <button
               onClick={handleExport}
               disabled={isExporting}
-              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 transition-all shadow-lg shadow-blue-100 disabled:opacity-50"
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold bg-slate-900 text-white hover:bg-black transition-all shadow-lg shadow-slate-200 disabled:opacity-50"
             >
               <Download size={16} />
               <span>{isExporting ? "Memroses..." : "Export"}</span>
@@ -180,7 +180,7 @@ export default function ModularEditorWorkspace() {
       {showReview && (
         <div className="fixed inset-0 z-100 flex items-center justify-end">
           <div 
-            className="absolute inset-0 bg-slate-950/40 backdrop-blur-md animate-in fade-in duration-500"
+            className="absolute inset-0 bg-black/20 backdrop-blur-md animate-in fade-in duration-500"
             onClick={() => setShowReview(false)}
           />
           <div className="relative w-full max-w-4xl h-full bg-white shadow-2xl flex flex-col animate-in slide-in-from-right duration-700 ease-out">
@@ -209,7 +209,7 @@ export default function ModularEditorWorkspace() {
                     {refinedTitle}
                   </h1>
                   <div className="space-y-4">
-                    <h4 className="text-xs font-black text-blue-600 uppercase tracking-[0.3em]">Research Objectives</h4>
+                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-[0.3em]">Research Objectives</h4>
                     <ul className="space-y-3">
                       {objectives.map((obj, i) => (
                         <li key={i} className="text-lg text-slate-600 flex gap-4">

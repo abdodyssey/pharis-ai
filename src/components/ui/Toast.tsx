@@ -22,14 +22,14 @@ export default function CustomToaster() {
               toast.type === "success" && "border-emerald-100 bg-white/95 text-emerald-900",
               toast.type === "error" && "border-red-100 bg-white/95 text-red-900",
               toast.type === "warning" && "border-amber-100 bg-white/95 text-amber-900",
-              toast.type === "info" && "border-blue-100 bg-white/95 text-blue-900"
+              toast.type === "info" && "border-slate-100 bg-white/95 text-slate-900"
             )}
           >
             <div className="shrink-0 pt-0.5">
               {toast.type === "success" && <CheckCircle2 className="w-5 h-5 text-emerald-500" />}
               {toast.type === "error" && <AlertCircle className="w-5 h-5 text-red-500" />}
               {toast.type === "warning" && <AlertTriangle className="w-5 h-5 text-amber-500" />}
-              {toast.type === "info" && <Info className="w-5 h-5 text-blue-500" />}
+              {toast.type === "info" && <Info className="w-5 h-5 text-slate-900" />}
             </div>
             
             <div className="flex-1 space-y-1">

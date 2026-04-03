@@ -19,7 +19,7 @@ export default function StepperNav() {
       
       {/* Active Line Progress */}
       <div 
-        className="absolute top-3 left-0 h-[2px] bg-blue-500 transition-all duration-500 ease-in-out -z-10"
+        className="absolute top-3 left-0 h-[2px] bg-slate-900 transition-all duration-500 ease-in-out -z-10"
         style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
       />
 
@@ -32,9 +32,9 @@ export default function StepperNav() {
             <div
               className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all duration-500 ${
                 isActive
-                  ? "bg-blue-600 text-white shadow-sm shadow-blue-100"
+                  ? "bg-slate-900 text-white shadow-sm shadow-slate-200"
                   : "bg-white border-2 border-slate-100 text-slate-300"
-              } ${isCurrent ? "ring-4 ring-blue-50" : ""}`}
+              } ${isCurrent ? "ring-4 ring-slate-100" : ""}`}
             >
               {step.id}
             </div>
