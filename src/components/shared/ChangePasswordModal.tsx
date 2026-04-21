@@ -69,8 +69,8 @@ export default function ChangePasswordModal({
            setConfirmPassword("");
         }, 500);
       }, 2000);
-    } catch (err: any) {
-      setError(err.message || "Gagal memperbarui password");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Gagal memperbarui password");
     } finally {
       setIsLoading(false);
     }

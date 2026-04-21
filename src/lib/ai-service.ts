@@ -4,7 +4,7 @@ import { supabase } from "./supabase";
 /**
  * Enhanced fetch wrapper for local API routes
  */
-async function callLocalApi(endpoint: string, body: any) {
+async function callLocalApi(endpoint: string, body: Record<string, unknown>) {
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -36,14 +36,15 @@ export const callResearchAI = async (
       sessionId: sessionId || null,
       mode,
       selectedTitle
-    });
+    } as any); // Type cast for internal API flex
 
     return { data, error: null, status: 200 };
-  } catch (err: any) {
-    if (err.name === 'AbortError' || err.message?.includes('abort')) {
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : "Gagal memproses ide riset.";
+    if (errorMessage.includes('AbortError') || errorMessage.includes('abort')) {
       return { data: null, error: "Waktu tunggu habis (Timeout). Server AI sedang padat.", status: 408 };
     }
-    return { data: null, error: err.message || "Gagal memproses ide riset.", status: 500 };
+    return { data: null, error: errorMessage, status: 500 };
   } finally {
     clearTimeout(timeoutId);
   }
@@ -60,10 +61,10 @@ export const callResearchEditor = async (params: {
   context?: Record<string, unknown>;
 }) => {
   try {
-    const data = await callLocalApi("/api/research/editor", params);
+    const data = await callLocalApi("/api/research/editor", params as any);
     return { data, error: null };
-  } catch (err: any) {
-    return { data: null, error: err.message || "AI generation failed." };
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : "AI generation failed." };
   }
 };
 
@@ -74,8 +75,8 @@ export const fetchReferences = async (query: string) => {
   try {
     const data = await callLocalApi("/api/research/search-papers", { query });
     return { data, error: null };
-  } catch (err: any) {
-    return { data: null, error: err.message || "Reference search failed." };
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : "Reference search failed." };
   }
 };
 
@@ -94,8 +95,8 @@ export const generateSection = async (
       manuscriptContent
     });
     return { data, error: null };
-  } catch (err: any) {
-    return { data: null, error: err.message || "Generation failed." };
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : "Generation failed." };
   }
 };
 
@@ -160,9 +161,9 @@ export const expandSection = async (sessionId: string, sectionTitle: string, cur
       mode: "expand_content",
       sectionTitle,
       currentContent
-    });
+    } as any);
     return { data, error: null };
-  } catch (err: any) {
-    return { data: null, error: err.message || "Expansion failed." };
+  } catch (err: unknown) {
+    return { data: null, error: err instanceof Error ? err.message : "Expansion failed." };
   }
 };

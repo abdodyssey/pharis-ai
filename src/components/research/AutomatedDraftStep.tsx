@@ -7,11 +7,9 @@ import {
   FlashIcon, 
   Tick01Icon, 
   ArrowRight01Icon, 
-  File01Icon,
   SparklesIcon,
   BookOpen01Icon,
   BubbleChatIcon,
-  LibraryIcon
 } from "@hugeicons/core-free-icons";
 import { useToastStore } from "@/store/useToastStore";
 import { callResearchAI, expandSection } from "@/lib/ai-service";
@@ -64,6 +62,16 @@ export default function AutomatedDraftStep({
 
   const [isExpanding, setIsExpanding] = useState(false);
 
+  const handleNext = useCallback(async () => {
+    try {
+      await completeStep(stepNumber as any);
+      updateResearchData({ currentStep: (stepNumber + 1) as any });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Kesalahan verifikasi";
+      addToast({ type: "error", message: "Gagal Verifikasi Kualitas", description: msg });
+    }
+  }, [stepNumber, completeStep, updateResearchData, addToast]);
+
   const handleGenerate = useCallback(async () => {
     if (!sessionId || isTaskRunning) return;
     
@@ -103,8 +111,9 @@ export default function AutomatedDraftStep({
           handleNext();
         }, 1500);
       }
-    } catch (err: any) {
-      console.warn("Generation Error:", err.message);
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : "Terjadi kesalahan";
+      console.warn("Generation Error:", errorMessage);
       addToast({ 
         type: "error", 
         message: "Kesalahan Teknis", 
@@ -113,7 +122,7 @@ export default function AutomatedDraftStep({
     } finally {
       setIsTaskRunning(false);
     }
-  }, [sessionId, isTaskRunning, mode, sectionTitle, addToast, fetchSections, saveToDb]);
+  }, [sessionId, isTaskRunning, mode, sectionTitle, addToast, fetchSections, saveToDb, stepNumber, handleNext]);
 
   useEffect(() => {
     const isAutoStep = [3, 4, 5, 6, 7, 8, 9].includes(stepNumber);
@@ -141,21 +150,14 @@ export default function AutomatedDraftStep({
       
       addToast({ type: "success", message: "Narasi Berhasil Diperluas" });
       await fetchSections(sessionId);
-    } catch (err: any) {
+    } catch (err: unknown) {
       addToast({ message: "Gagal menyambungkan narasi.", type: "error" });
     } finally {
       setIsExpanding(false);
     }
   };
 
-  const handleNext = async () => {
-    try {
-      await completeStep(stepNumber as any);
-      updateResearchData({ currentStep: (stepNumber + 1) as any });
-    } catch (err: any) {
-      addToast({ type: "error", message: "Gagal Verifikasi Kualitas", description: err.message });
-    }
-  };
+
 
   return (
     <div className="max-w-4xl mx-auto px-6 py-16 lg:py-24 space-y-12">

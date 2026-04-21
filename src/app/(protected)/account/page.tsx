@@ -14,9 +14,10 @@ import {
 import { Button } from "@/components/ui/Button";
 import { supabase } from "@/lib/supabase";
 import ChangePasswordModal from "@/components/shared/ChangePasswordModal";
+import type { User } from "@supabase/supabase-js";
 
 export default function AccountPage() {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [fullName, setFullName] = useState("");
   const [planType, setPlanType] = useState("free");
   const [isUpdating, setIsUpdating] = useState(false);
@@ -56,8 +57,8 @@ export default function AccountPage() {
       
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
-    } catch (err) {
-      console.error(err);
+    } catch (err: unknown) {
+      console.error("Profile Update Error:", err);
     } finally {
       setIsUpdating(false);
     }

@@ -11,8 +11,6 @@ import {
   VariableDefinition,
   HypothesisDefinition,
   OutlineNode,
-  MIN_REFERENCES_REQUIRED,
-  MIN_WORDS_PER_SECTION,
   RESEARCH_STEPS,
 } from "@/types/research";
 import { formatBibliographyToAPA } from "@/lib/bibliography-utils";
@@ -452,7 +450,7 @@ export const useResearchStore = create<ResearchState>((set, get) => ({
       });
       
       await get().saveToDb();
-    } catch (err) {
+    } catch (err: unknown) {
       const errorMsg = err instanceof Error ? err.message : String(err);
       set({ error: errorMsg, isLoading: false });
     }
