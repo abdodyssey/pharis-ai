@@ -7,7 +7,8 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/Dialog";
-import { AlertTriangle, Trash2, Loader2 } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Alert01Icon, Delete02Icon, Loading01Icon } from "@hugeicons/core-free-icons";
 
 interface DeleteConfirmationDialogProps {
   isOpen: boolean;
@@ -26,48 +27,51 @@ export default function DeleteConfirmationDialog({
 }: DeleteConfirmationDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md bg-white border-none shadow-2xl">
-        <DialogHeader className="flex flex-col items-center justify-center space-y-4 pt-4 text-center">
-          <div className="w-16 h-16 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center shrink-0">
-            <AlertTriangle size={32} />
+      <DialogContent className="sm:max-w-[400px] bg-white dark:bg-obsidian-1 border-none shadow-2xl p-8 rounded-3xl">
+        <DialogHeader className="flex flex-col items-center justify-center space-y-6 text-center">
+          <div className="w-20 h-20 bg-rose-500/10 text-rose-500 rounded-2xl flex items-center justify-center shrink-0 animate-in fade-in zoom-in duration-500">
+            <HugeiconsIcon icon={Alert01Icon} size={36} />
           </div>
-          <div className="space-y-2">
-            <DialogTitle className="text-2xl font-bold text-slate-900">
+          <div className="space-y-3">
+            <DialogTitle className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
               {title}
             </DialogTitle>
-            <DialogDescription className="text-slate-500 text-base leading-relaxed max-w-[280px] mx-auto">
-              Tindakan ini bersifat <span className="text-rose-600 font-bold italic">permanen</span> dan tidak dapat dibatalkan. Semua data riset Anda akan hilang.
+            <DialogDescription className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
+              Tindakan ini bersifat <span className="text-rose-500 font-bold">permanen</span>. Seluruh progres riset, referensi, dan draf tulisan akan dihapus selamanya.
             </DialogDescription>
           </div>
         </DialogHeader>
 
-        <div className="flex flex-col sm:flex-row gap-3 pt-6">
-          <button
-            onClick={() => onOpenChange(false)}
-            disabled={isLoading}
-            className="flex-1 px-4 py-4 rounded-2xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition-all active:scale-[0.98] disabled:opacity-50"
-          >
-            Batalkan
-          </button>
+        <div className="flex flex-col gap-3 pt-8">
           <button
             onClick={onConfirm}
             disabled={isLoading}
-            className="flex-1 px-4 py-4 rounded-2xl bg-rose-600 text-white font-bold hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-50"
+            className="w-full px-6 py-4 rounded-xl bg-rose-500 text-white font-black text-sm hover:bg-rose-600 transition-all shadow-lg shadow-rose-500/20 active:scale-[0.98] flex items-center justify-center gap-2 group disabled:opacity-50"
           >
             {isLoading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
+              <HugeiconsIcon icon={Loading01Icon} className="w-5 h-5 animate-spin" />
             ) : (
               <>
-                <Trash2 size={18} />
-                Ya, Hapus
+                <HugeiconsIcon icon={Delete02Icon} size={18} className="group-hover:rotate-12 transition-transform" />
+                Ya, Hapus Permanen
               </>
             )}
           </button>
+          
+          <button
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+            className="w-full px-6 py-3.5 rounded-xl bg-transparent text-slate-500 dark:text-slate-400 font-bold text-xs hover:text-slate-900 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-white/5 transition-all disabled:opacity-50"
+          >
+            Batalkan
+          </button>
         </div>
 
-        <p className="text-[10px] text-center text-slate-400 font-medium py-2">
-          PharisAI Secure Content Management &middot; 2026
-        </p>
+        <div className="pt-6 border-t border-slate-100 dark:border-white/5 mt-4">
+          <p className="text-[9px] text-center text-slate-400 font-bold uppercase tracking-widest opacity-50">
+            PharisAI Secure Content Management
+          </p>
+        </div>
       </DialogContent>
     </Dialog>
   );

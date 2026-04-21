@@ -5,24 +5,26 @@ import { useResearchStore } from "@/store/useResearchStore";
 import { callResearchAI } from "@/lib/ai-service";
 import { useToastStore } from "@/store/useToastStore";
 import ModelLimitDialog from "@/components/shared/ModelLimitDialog";
-import { Lightbulb, Target, Sparkles, ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { TargetIcon, Idea01Icon, SparklesIcon, ArrowRight01Icon, Tick01Icon } from "@hugeicons/core-free-icons";
 import { cn } from "@/lib/utils";
 
 const loadingMessages = [
-  "Searching for 15 relevant journals...",
-  "Categorizing literature by themes...",
-  "Synthesizing research gaps...",
-  "Mapping academic contradictions...",
-  "Preparing your workspace...",
+  "Generating SMART objectives...",
+  "Generating Introduction draf...",
+  "Building IMRAD blueprint...",
+  "Aligning with academic standards...",
+  "Finalizing research scaffold...",
 ];
 
 export default function Step2TitleObjective() {
-  const { 
-    topic, 
-    titleOptions, 
-    sessionId, 
-    updateResearchData, 
-    nextStep 
+  const {
+    topic,
+    titleOptions,
+    sessionId,
+    updateResearchData,
+    nextStep,
+    completeStep,
   } = useResearchStore();
 
   const { addToast } = useToastStore();
@@ -41,159 +43,123 @@ export default function Step2TitleObjective() {
     return () => clearInterval(interval);
   }, [isGenerating]);
 
-  const handleSelectTitle = async (idx: number) => {
-    if (!sessionId) return;
-    setSelectedIdx(idx);
+  const handleConfirmNextStep = async () => {
+    if (selectedIdx === null || !sessionId) return;
+
     setIsGenerating(true);
-    setLoadingIndex(0);
-
     try {
-      const selected = titleOptions[idx];
-      const result = await callResearchAI(
-        topic, 
-        sessionId, 
-        "generate", 
-        selected.title
-      );
-
-      if (result.error) {
-        addToast({ 
-          type: "error", 
-          message: "Gagal memproses draf", 
-          description: result.error 
-        });
-        setIsGenerating(false);
-        return;
-      }
-
-      if (result.data?.session) {
-        updateResearchData({
-          refinedTitle: result.data.session.refined_title,
-          objectives: result.data.session.research_objectives || [],
-          currentStep: 3,
-        });
-        // fetchSession handles sections automatically if needed, 
-        // but since we inserted them in Edge Function, nextStep will move us to Workspace
-        nextStep();
-      }
+      const selected = titleOptions[selectedIdx];
+      
+      // Fast transition: update store and save to DB
+      await updateResearchData({
+        refinedTitle: selected.title,
+        currentStep: 3,
+      });
+      
+      await completeStep(2);
+      nextStep();
+      
     } catch (err: unknown) {
       console.error(err);
-      const errorMessage = err instanceof Error ? err.message : "Kesalahan Sistem";
-      const status = (err as { status?: number })?.status;
-
-      if (status === 429) {
-        setIsRateLimitOpen(true);
-      } else {
-        addToast({ 
-          type: "error", 
-          message: "Kesalahan Sistem", 
-          description: errorMessage 
-        });
-      }
+      addToast({
+        type: "error",
+        message: "Kesalahan Sistem",
+        description: "Gagal menyimpan pilihan judul.",
+      });
     } finally {
       setIsGenerating(false);
     }
   };
 
-  if (isGenerating) {
-    return (
-      <div className="flex flex-col items-center justify-center py-20 space-y-8 animate-in fade-in duration-500">
-        <div className="relative">
-          <div className="w-20 h-20 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Sparkles className="w-8 h-8 text-slate-900 animate-pulse" />
-          </div>
-        </div>
-        <div className="text-center space-y-2">
-          <h3 className="text-xl font-bold text-slate-900">Membangun Fondasi Riset</h3>
-          <p className="text-slate-500 font-medium animate-pulse">
-            {loadingMessages[loadingIndex]}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      <div className="space-y-3">
-        <div className="flex items-center gap-2 text-slate-900 mb-1">
-          <span className="text-xs font-black uppercase tracking-widest text-slate-900/60">Phase 02</span>
-          <div className="h-px w-8 bg-slate-200" />
+    <div className="max-w-2xl mx-auto px-6 py-16 space-y-12">
+      <div className="text-center space-y-6">
+        <div className="flex flex-col items-center gap-4">
+          <div className="px-3 py-1 bg-slate-100 dark:bg-obsidian-2 rounded-lg text-[9px] font-black text-accent-lime">
+            Direction Analysis
+          </div>
+          <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-tight">
+            Pilih Arah Judul Penelitian
+          </h2>
         </div>
-        <h2 className="text-3xl font-bold text-slate-900 tracking-tight">
-          Pilih Arah Judul Penelitian
-        </h2>
-        <p className="text-slate-500 text-lg leading-relaxed max-w-2xl">
-          PharisAI telah merumuskan 3 opsi judul berdasarkan research gap yang ditemukan. Pilih yang paling sesuai dengan visi penelitian Anda.
+        <p className="text-[13px] md:text-sm text-slate-500 font-medium leading-relaxed max-w-lg mx-auto">
+          AI Pharis telah merumuskan berbagai alternatif ruang kosong riset (<i>Research Gap</i>) dari narasi awal Anda. Pilih satu judul yang paling merepresentasikan visi akhir manuskrip Anda.
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6">
+      <div className="space-y-6">
         {titleOptions.map((option, i) => (
-          <div
+          <button
             key={i}
-            onClick={() => !isGenerating && handleSelectTitle(i)}
+            onClick={() => setSelectedIdx(i)}
             className={cn(
-              "group relative p-8 bg-white border-2 rounded-[2rem] transition-all cursor-pointer hover:shadow-2xl hover:shadow-slate-200/50 active:scale-[0.99]",
-              selectedIdx === i 
-                ? "border-slate-900 ring-4 ring-slate-100 shadow-xl" 
-                : "border-slate-100 hover:border-slate-200"
+              "group w-full relative p-6 md:p-8 bg-white/60 dark:bg-obsidian-1/60 backdrop-blur-2xl rounded-2xl transition-all duration-300 text-left border",
+              selectedIdx === i
+                ? "border-accent-lime shadow-[0_0_40px_rgba(204,255,0,0.15)] dark:shadow-[0_0_40px_rgba(204,255,0,0.05)] scale-[1.02]"
+                : "border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 hover:shadow-2xl hover:shadow-slate-200/50 dark:hover:shadow-[0_0_30px_rgb(0,0,0,0.5)] hover:-translate-y-1"
             )}
           >
-            <div className="flex flex-col md:flex-row gap-8">
-              <div className="flex-1 space-y-6">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-slate-100 text-slate-900 flex items-center justify-center shrink-0">
-                    {i === 0 && <Target size={20} />}
-                    {i === 1 && <Lightbulb size={20} />}
-                    {i === 2 && <Sparkles size={20} />}
-                  </div>
-                  <div className="px-3 py-1 rounded-full bg-slate-50 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                    Opsi {i + 1}
-                  </div>
-                </div>
+            {/* Absolute Focus Indicator... optional */}
+            {selectedIdx === i && (
+              <div className="absolute inset-0 border border-accent-lime rounded-2xl pointer-events-none shadow-[inset_0_0_20px_rgba(204,255,0,0.05)]" />
+            )}
 
-                <div className="space-y-2">
-                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 leading-tight group-hover:text-black transition-colors">
-                    {option.title}
-                  </h3>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6 pt-4 border-t border-slate-50">
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em]">Research Gap</span>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                      {option.gap}
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.2em]">Rationale</span>
-                    <p className="text-sm text-slate-600 leading-relaxed font-medium">
-                      {option.rationale}
-                    </p>
-                  </div>
-                </div>
+            <div className="flex items-start gap-5">
+              <div
+                className={cn(
+                  "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all duration-300 shadow-sm",
+                  selectedIdx === i
+                    ? "bg-accent-lime text-obsidian-0 shadow-accent-lime/30 scale-110"
+                    : "bg-slate-100 dark:bg-obsidian-2 text-slate-400 group-hover:bg-slate-200 dark:group-hover:bg-white/5"
+                )}
+              >
+                {selectedIdx === i ? <HugeiconsIcon icon={Tick01Icon} size={18} strokeWidth={3} className="animate-in zoom-in duration-300" /> : <span className="text-[11px] font-black">{i + 1}</span>}
               </div>
 
-              <div className="md:w-48 flex items-center justify-center">
-                  <div className={cn(
-                    "w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all",
-                    selectedIdx === i 
-                      ? "bg-slate-900 text-white shadow-lg" 
-                      : "bg-slate-50 text-slate-400 group-hover:bg-slate-100 group-hover:text-slate-900"
-                  )}>
-                   Pilih Judul
-                   <ArrowRight size={18} />
-                 </div>
+              <div className="flex-1 space-y-3.5 pt-0.5">
+                <h3 className={cn(
+                  "text-[15px] md:text-lg font-bold leading-snug transition-colors",
+                  selectedIdx === i ? "text-slate-900 dark:text-white" : "text-slate-700 dark:text-slate-200 group-hover:text-slate-900 dark:group-hover:text-white"
+                )}>
+                  {option.title}
+                </h3>
+                <div className="flex flex-col gap-2 border-t border-slate-100 dark:border-white/[0.05] pt-3.5">
+                   <div className="flex items-start gap-2.5 text-slate-500 dark:text-slate-400">
+                     <HugeiconsIcon icon={TargetIcon} className="w-4 h-4 shrink-0 mt-0.5 text-accent-lime/70" />
+                     <p className="text-[11px] md:text-xs font-medium italic leading-relaxed">
+                       {option.gap}
+                     </p>
+                   </div>
+                </div>
               </div>
             </div>
-          </div>
+          </button>
         ))}
       </div>
-      <ModelLimitDialog 
-        isOpen={isRateLimitOpen} 
-        onOpenChange={setIsRateLimitOpen} 
+
+      <div className="pt-10 border-t border-slate-200 dark:border-white/5 flex justify-center pb-10">
+        <button
+          onClick={handleConfirmNextStep}
+          disabled={selectedIdx === null || isGenerating}
+          className="group flex flex-col sm:flex-row items-center justify-center gap-3 h-[60px] px-12 bg-slate-900 dark:bg-accent-lime text-white dark:text-obsidian-0 rounded-xl font-bold text-sm hover:bg-accent-lime hover:text-obsidian-0 dark:hover:bg-white dark:hover:text-obsidian-0 disabled:opacity-30 disabled:scale-100 transition-all duration-300 hover:-translate-y-1 shadow-2xl shadow-slate-900/20 dark:shadow-accent-lime/20 w-full sm:w-auto"
+        >
+          {isGenerating ? (
+             <span className="flex items-center gap-3">
+               Memproses Modul... <HugeiconsIcon icon={SparklesIcon} size={16} className="animate-pulse" />
+             </span>
+          ) : (
+            <>
+              <span>Konfirmasi & Cari Referensi</span>
+              <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="group-hover:translate-x-1 transition-transform" />
+            </>
+          )}
+        </button>
+      </div>
+
+      <ModelLimitDialog
+        isOpen={isRateLimitOpen}
+        onOpenChange={setIsRateLimitOpen}
       />
     </div>
   );

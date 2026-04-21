@@ -1,13 +1,27 @@
 @import "tailwindcss";
 
-/* Konfigurasi Tema Langsung di CSS */
-@theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+@custom-variant dark (&:where(.dark, .dark *));
 
-  /* Monochrome Design System */
-  --color-brand-primary: #0f172a; /* Slate 900 */
-  --color-brand-secondary: #334155; /* Slate 700 */
-  --color-glass-white: rgba(255, 255, 255, 0.85);
+:root {
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-jakarta), sans-serif;
+}
+
+/* Konfigurasi Tema Langsung di CSS - Obsidian Deep Design System */
+@theme {
+  /* Obsidian Deep Palette */
+  --color-obsidian-0: #020617; /* Slate 950 - Master Background */
+  --color-obsidian-1: #0f172a; /* Slate 900 - Surface Level 1 (Sidebar/Cards) */
+  --color-obsidian-2: #1e293b; /* Slate 800 - Element Level 2 (Hovers/Inputs) */
+  
+  /* High Contrast Accents */
+  --color-accent-lime: #a3e635; /* Lime 400 */
+  --color-accent-lime-muted: #4d7c0f; /* Lime 700 */
+
+  /* Legacy brand colors mapping */
+  --color-brand-primary: var(--color-obsidian-1);
+  --color-brand-secondary: var(--color-obsidian-2);
+  --color-glass-white: rgba(15, 23, 42, 0.85); /* Darkened for glassmorphism */
 
   /* Animasi Custom untuk Transisi Step */
   --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
@@ -27,7 +41,7 @@
 /* Base Styles */
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 min-h-screen selection:bg-brand-primary/10;
+    @apply bg-slate-50 dark:bg-obsidian-0 text-slate-900 dark:text-slate-100 min-h-screen selection:bg-accent-lime/20 selection:text-accent-lime transition-colors duration-200 ease-in-out;
   }
 }
 
@@ -40,54 +54,494 @@
   .step-container {
     @apply bg-white rounded-3xl shadow-lg border border-slate-100 p-6 md:p-10 animate-fade-in-up;
   }
+
+  /* Obsidian Deep Step Container */
+  .step-container-obsidian {
+    @apply bg-obsidian-1 rounded-3xl border border-obsidian-2 p-6 md:p-10 animate-fade-in-up;
+  }
+
+  /* Obsidian Deep Custom Scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 dark:bg-white/10 rounded-full transition-colors;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-slate-300 dark:bg-white/20;
+  }
 }
 
-/* Tiptap Editor Styling - Jurnal Akademik Look */
+/* ═══════════════════════════════════════════════════════════════
+   RESEARCH JOURNEY SIDEBAR — 7-Step Progress Tracker
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Node Glow Effects */
+.journey-node-completed {
+  box-shadow: 0 0 12px rgba(163, 230, 53, 0.4), 0 0 24px rgba(163, 230, 53, 0.15);
+}
+
+.journey-node-active {
+  box-shadow: 0 0 16px rgba(163, 230, 53, 0.3), 0 0 32px rgba(163, 230, 53, 0.1);
+  animation: node-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes node-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(163, 230, 53, 0.3), 0 0 32px rgba(163, 230, 53, 0.1); }
+  50% { box-shadow: 0 0 24px rgba(163, 230, 53, 0.5), 0 0 48px rgba(163, 230, 53, 0.2); }
+}
+
+/* Connector Line Gradient */
+.journey-connector {
+  width: 2px;
+  background: linear-gradient(to bottom, var(--color-obsidian-2), var(--color-obsidian-2));
+  transition: background 0.6s ease;
+}
+
+.journey-connector-completed {
+  background: linear-gradient(to bottom, var(--color-accent-lime), var(--color-accent-lime-muted));
+}
+
+/* Step Content Transitions */
+.step-enter {
+  opacity: 0;
+  transform: translateY(16px);
+}
+
+.step-enter-active {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+}
+
+/* Idea Bubbles Animation (Step 1) */
+@keyframes float-bubble {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-6px) scale(1.02); }
+}
+
+.idea-bubble {
+  animation: float-bubble 3s ease-in-out infinite;
+}
+
+.idea-bubble:nth-child(2) { animation-delay: 0.5s; }
+.idea-bubble:nth-child(3) { animation-delay: 1s; }
+.idea-bubble:nth-child(4) { animation-delay: 1.5s; }
+
+/* ═══════════════════════════════════════════════════════════════
+   TIPTAP WORD-LIKE CANVAS EDITOR — MONOCHROME DESIGN SYSTEM 
+   ═══════════════════════════════════════════════════════════════ */
+
+   
+/* A4 Paper Canvas Background */
+.editor-canvas-bg {
+  background-color: #f1f5f9; /* light */
+  @apply dark:bg-obsidian-0;
+  background-image: 
+    radial-gradient(circle at 1px 1px, #e2e8f0 0.5px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.dark .editor-canvas-bg {
+  background-image: 
+    radial-gradient(circle at 1px 1px, #1e293b 0.5px, transparent 0);
+}
+
+/* A4 Paper Sheet — Precise "4433" Physical Margins (T:4, L:4, B:3, R:3) */
+.a4-paper {
+  width: 21cm;
+  max-width: 21cm;
+  min-height: 29.7cm;
+  @apply bg-white dark:bg-obsidian-1;
+  margin: 2rem auto;
+  box-shadow: 
+    0 0 0 1px rgba(0,0,0,0.05),
+    0 10px 15px -3px rgba(0,0,0,0.1),
+    0 4px 6px -4px rgba(0,0,0,0.1),
+    0 25px 50px -12px rgba(0,0,0,0.25);
+  @apply dark:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.9)] dark:border dark:border-obsidian-2;
+  border-radius: 4px;
+  position: relative;
+  
+  /* Physical Margins for Thesis (4cm Top, 4cm Left, 3cm Bottom, 3cm Right) */
+  padding-top: 4cm;
+  padding-left: 4cm;
+  padding-bottom: 3cm;
+  padding-right: 3cm;
+  
+  box-sizing: border-box;
+}
+
+/* ProseMirror Base — Professional Academic Typography (Thesis Standard) */
 .ProseMirror {
   outline: none !important;
-  @apply min-h-[600px] text-lg leading-relaxed text-slate-800 font-serif antialiased;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 11pt;
+  line-height: 2; /* Standard Academic Spacing (Double Space equivalent) */
+  color: #1a1a1a;
+  @apply dark:text-slate-100;
+  min-height: 29.7cm;
+  width: 100% !important;
+  max-width: none !important;
+  caret-color: #a3e635;
+  @apply dark:caret-accent-lime;
+  
+  /* Advanced Justification & Hyphenation Engine (Anti-Rivers) */
+  text-align: justify;
+  text-justify: inter-word; 
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  word-break: normal; 
+  overflow-wrap: break-word;
+  -webkit-font-smoothing: subpixel-antialiased;
+  -moz-osx-font-smoothing: auto;
 }
 
 .ProseMirror p {
-  @apply mb-4 leading-relaxed;
+  margin-bottom: 1em;
+  text-align: justify;
+  text-justify: inter-character;
+  hyphens: auto;
+  -webkit-hyphens: auto;
+  word-spacing: -0.05em;
+}
+
+/* Hanging Indent for Chapter 7 (Bibliography) — Standard Skripsi 4433 */
+.ProseMirror p.bib-item {
+  padding-left: 0.5in; 
+  text-indent: -0.5in;
+  line-height: 1.5;
+  margin-bottom: 12pt;
+  text-align: justify;
 }
 
 .ProseMirror h1 {
-  @apply text-4xl font-bold mb-6 text-slate-900 border-b border-slate-100 pb-2;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #0f172a;
+  @apply dark:text-slate-100;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #0f172a;
+  @apply dark:border-obsidian-2;
+  letter-spacing: -0.02em;
+  
 }
 
 .ProseMirror h2 {
-  @apply text-2xl font-bold mb-4 mt-8 text-slate-900;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #0f172a;
+  @apply dark:text-slate-100;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .ProseMirror h3 {
-  @apply text-xl font-bold mb-3 mt-6 text-slate-800;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1e293b;
+  @apply dark:text-slate-300;
+  margin-top: 1.25rem;
+  margin-bottom: 0.5rem;
 }
 
 .ProseMirror ul {
-  @apply list-disc pl-6 mb-4 space-y-2;
+  list-style-type: disc;
+  padding-left: 2em;
+  margin-bottom: 1em;
 }
 
 .ProseMirror ol {
-  @apply list-decimal pl-6 mb-4 space-y-2;
+  list-style-type: decimal;
+  padding-left: 2em;
+  margin-bottom: 1em;
 }
 
 .ProseMirror li {
-  @apply leading-relaxed;
+  margin-bottom: 0.25em;
+  line-height: 2;
 }
 
 .ProseMirror strong {
-  @apply font-bold text-slate-950;
+  font-weight: 700;
+  color: #0f172a;
+  @apply dark:text-accent-lime font-bold;
 }
 
 .ProseMirror em {
-  @apply italic;
+  font-style: italic;
 }
 
+.ProseMirror u {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ProseMirror a {
+  color: #0f172a;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ProseMirror a:hover {
+  color: #000;
+}
+
+/* Section Break — Visual Page Separator */
+.ProseMirror .section-break {
+  border: none;
+  position: relative;
+  margin: 3rem 0;
+  padding: 2rem 0;
+  page-break-after: always;
+}
+
+.ProseMirror .section-break::before {
+  content: '';
+  display: block;
+  width: 100%;
+  height: 0;
+  border-top: 1.5px dashed #cbd5e1;
+}
+
+.ProseMirror .section-break::after {
+  content: 'Section Break';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  @apply bg-white dark:bg-obsidian-1;
+  padding: 0.25rem 1rem;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  color: #94a3b8;
+  letter-spacing: -0.02em;
+}
+
+/* Page Break — Ctrl+Enter */
+.ProseMirror hr {
+  border: none;
+  position: relative;
+  margin: 2.5rem 0;
+  padding: 1.5rem 0;
+}
+
+.ProseMirror hr::before {
+  content: '';
+  display: block;
+  width: 100%;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.ProseMirror hr::after {
+  content: '— Page Break —';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 0.125rem 0.75rem;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 8px;
+  font-weight: 700;
+  color: #cbd5e1;
+  letter-spacing: -0.02em;
+}
+
+/* Section Header Anchor (rendered by the canvas) */
+.section-anchor {
+  scroll-margin-top: 2rem;
+}
+
+/* Inline Citation / @Mention */
+.mention {
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 0.9em;
+  color: #0f172a;
+  background: #f1f5f9;
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+/* Mention Suggestion Dropdown */
+.mention-suggestion {
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+  padding: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  width: 360px;
+  z-index: 100;
+}
+
+.mention-suggestion-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mention-suggestion-item:hover,
+.mention-suggestion-item.is-selected {
+  background: #f1f5f9;
+}
+
+.mention-suggestion-item .author {
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.mention-suggestion-item .title {
+  font-size: 11px;
+  color: #64748b;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Bubble Menu — Floating Toolbar */
+.bubble-menu {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #0f172a;
+  padding: 4px 6px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+
+.bubble-menu button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  color: #94a3b8;
+  transition: all 0.15s;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+.bubble-menu button:hover {
+  color: white;
+  background: rgba(255,255,255,0.1);
+}
+
+.bubble-menu button.is-active {
+  color: white;
+  background: rgba(255,255,255,0.15);
+}
+
+.bubble-menu .separator {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.15);
+  margin: 0 2px;
+}
+
+/* Placeholder */
 .ProseMirror p.is-editor-empty:first-child::before {
   content: attr(data-placeholder);
   float: left;
-  color: #adb5bd;
+  color: #cbd5e1;
   pointer-events: none;
   height: 0;
+  font-style: italic;
+}
+
+/* Custom Scrollbar for Editor */
+.editor-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.editor-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.editor-scroll::-webkit-scrollbar-thumb {
+  background: #e2e8f0;
+  border-radius: 10px;
+}
+
+.editor-scroll::-webkit-scrollbar-thumb:hover {
+  background: #cbd5e1;
+}
+
+/* Precise Print Configuration for Fedoral/Chrome */
+@media print {
+  @page {
+    size: A4;
+    margin: 0; /* Managed by .a4-paper padding */
+  }
+
+  body {
+    background: white;
+    margin: 0;
+    padding: 0;
+  }
+
+  .editor-canvas-bg {
+    background: white !important;
+  }
+
+  .a4-paper {
+    width: 21cm !important;
+    min-height: 29.7cm !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding-top: 4cm !important;
+    padding-left: 4cm !important;
+    padding-bottom: 3cm !important;
+    padding-right: 3cm !important;
+    border: none !important;
+  }
+  
+  .ProseMirror {
+    font-size: 12pt !important;
+    line-height: 1.5 !important;
+  }
+
+  .ProseMirror hr {
+    page-break-after: always;
+    visibility: hidden;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .no-print {
+    display: none !important;
+  }
+
+  /* Force display context for print */
+  .a4-paper * {
+    visibility: visible !important;
+  }
 }

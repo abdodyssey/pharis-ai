@@ -1,11 +1,11 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase-server";
+import { HugeiconsIcon } from "@hugeicons/react";
 import { 
-  BarChart3, 
-  ChevronRight, 
-  FileText, 
-  ArrowRight 
-} from "lucide-react";
+  Analytics01Icon, 
+  ArrowRight01Icon, 
+  File01Icon 
+} from "@hugeicons/core-free-icons";
 import { ResearchSession } from "@/types/research";
 
 export default async function RecentResearchLoader() {
@@ -16,31 +16,35 @@ export default async function RecentResearchLoader() {
 
   const { data: sessions } = await supabase
     .from("research_sessions")
-    .select("*")
+    .select("*, research_sections(id)")
     .eq("user_id", user.id)
-    .order("updated_at", { ascending: false })
-    .limit(2);
+    .order("updated_at", { ascending: false });
+
+  // Filter only sessions that already have structure (Bab 1-7)
+  const validSessions = (sessions || [])
+    .filter(s => s.research_sections && s.research_sections.length > 0)
+    .slice(0, 2);
 
   return (
     <section className="space-y-5">
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <BarChart3 className="w-5 h-5 text-slate-900" />
+          <HugeiconsIcon icon={Analytics01Icon} size={20} className="text-slate-900" />
           Lanjutkan Riset Terakhir
         </h2>
         <Link
-          href="/dashboard/all"
+          href="/my-research"
           className="text-sm font-bold text-slate-900 hover:text-black flex items-center gap-1 group transition-colors"
         >
           Lihat Semua Riset
-          <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+          <HugeiconsIcon icon={ArrowRight01Icon} size={16} className="group-hover:translate-x-1 transition-transform" />
         </Link>
       </div>
 
-      {!sessions || sessions.length === 0 ? (
+      {!validSessions || validSessions.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 bg-white border border-slate-100 rounded-3xl shadow-sm text-center px-6">
           <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4 text-slate-300">
-            <FileText className="w-8 h-8" />
+            <HugeiconsIcon icon={File01Icon} size={32} />
           </div>
           <h3 className="text-lg font-bold text-slate-800">Belum ada riset aktif</h3>
           <p className="text-slate-500 mt-1 max-w-xs">
@@ -49,7 +53,7 @@ export default async function RecentResearchLoader() {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {sessions.map((session: ResearchSession) => (
+          {validSessions.map((session: ResearchSession) => (
             <Link
               key={session.id}
               href={`/research/${session.id}`}
@@ -57,7 +61,7 @@ export default async function RecentResearchLoader() {
             >
               <div className="flex-1 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full">
+                  <span className="text-[10px] font-bold text-slate-400 bg-slate-50 px-2.5 py-1 rounded-full">
                     ID: {session.id.slice(0, 8)}
                   </span>
                   <span className="text-xs font-medium text-slate-400 whitespace-nowrap">
@@ -86,7 +90,7 @@ export default async function RecentResearchLoader() {
                   </span>
                 </div>
                 <div className="bg-slate-50 group-hover:bg-slate-100 p-2 rounded-xl text-slate-400 group-hover:text-slate-900 transition-colors">
-                  <ArrowRight className="w-4 h-4" />
+                  <HugeiconsIcon icon={ArrowRight01Icon} size={16} />
                 </div>
               </div>
             </Link>

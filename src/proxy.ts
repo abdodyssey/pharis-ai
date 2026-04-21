@@ -54,21 +54,35 @@ export async function proxy(request: NextRequest) {
     }
   )
 
+  // IMPORTANT: Use getUser() for security as it validates the session with the server
   const { data: { user } } = await supabase.auth.getUser()
 
-  // Protect dashboard routes
-  if (!user && (request.nextUrl.pathname.startsWith('/dashboard') || request.nextUrl.pathname.startsWith('/research'))) {
+  const isAuthPage = request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register'
+  
+  // Define protected paths
+  // Home (/) is now public (switches between landing & dashboard), 
+  // but all other internal apps are protected.
+  const isProtectedPath = 
+    request.nextUrl.pathname.startsWith('/overview') ||
+    request.nextUrl.pathname.startsWith('/research') ||
+    request.nextUrl.pathname.startsWith('/my-research') ||
+    request.nextUrl.pathname.startsWith('/account') ||
+    request.nextUrl.pathname.startsWith('/billing') ||
+    request.nextUrl.pathname.startsWith('/settings')
+
+  // Protect academic & dashboard routes
+  if (!user && isProtectedPath) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Redirect logged in users away from auth pages
-  if (user && (request.nextUrl.pathname === '/login' || request.nextUrl.pathname === '/register')) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Redirect logged in users away from auth pages to avoid duplicate login
+  if (user && isAuthPage) {
+    return NextResponse.redirect(new URL('/overview', request.url))
   }
 
   return response
 }
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)'],
 }

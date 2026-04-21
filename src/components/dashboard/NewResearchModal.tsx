@@ -3,62 +3,107 @@
 import { useState, useEffect } from "react";
 import * as Dialog from "@radix-ui/react-dialog";
 import { useRouter } from "next/navigation";
-import { X, ArrowRight, Sparkles, Target, Lightbulb, BrainCircuit, AlertCircle } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { 
+  ArrowRight01Icon, 
+  SparklesIcon, 
+  TargetIcon, 
+  Idea01Icon, 
+  Brain02Icon, 
+  AlertCircleIcon, 
+  Cancel01Icon 
+} from "@hugeicons/core-free-icons";
+import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { callResearchAI } from "@/lib/ai-service";
 import { useResearchStore } from "@/store/useResearchStore";
-import { useToastStore } from "@/store/useToastStore";
 import ModelLimitDialog from "@/components/shared/ModelLimitDialog";
 import { TitleOption, BibliographyEntry } from "@/types/research";
 import { supabase } from "@/lib/supabase";
+import { z } from "zod";
+import { Button } from "@/components/ui/Button";
 
-const step1LoadingMessages = [
+const TitleOptionSchema = z.object({
+  title: z.string().default("Untitled Research"),
+  gap: z.string().default("No gap specified"),
+  rationale: z.string().default("No rationale provided"),
+  keywords: z.array(z.string()).default([])
+});
+
+const BrainstormSchema = z.object({
+  options: z.array(TitleOptionSchema).default([]),
+  keywords: z.array(z.string()).default([]),
+  bibliography: z.array(z.any()).default([])
+});
+
+const GenerateSchema = z.object({
+  session: z.object({
+    id: z.string(),
+    refined_title: z.string().default(""),
+    keywords: z.array(z.string()).default([]),
+    research_objectives: z.array(z.string()).default([]),
+    current_step: z.number().default(3)
+  }).optional()
+});
+
+const loadingMessages = [
   "Membedah esensi ide riset Anda...",
-  "Mencari literatur relevan...",
+  "Mencari literatur relevan (15 Jurnal)...",
   "Menganalisis research gap...",
-  "Merumuskan opsi judul strategis...",
-];
-
-const step2LoadingMessages = [
-  "Menyusun struktur SMART...",
-  "Membangun draf awal konten...",
-  "Menyiapkan workspace akademik Anda...",
+  "Menyusun draf struktur Bab 1-7...",
+  "Menyiapkan workspace akademik Anda..."
 ];
 
 export default function NewResearchModal({ trigger }: { trigger: React.ReactNode }) {
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState(1);
   const [topic, setTopic] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [loadingIndex, setLoadingIndex] = useState(0);
   const [titleOptions, setTitleOptions] = useState<TitleOption[]>([]);
   const [bibliography, setBibliography] = useState<BibliographyEntry[]>([]);
+  const [keywords, setKeywords] = useState<string[]>([]);
   const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
   const [isRateLimitOpen, setIsRateLimitOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  
+  const [isMounted, setIsMounted] = useState(false);
+
   const router = useRouter();
   const { updateResearchData } = useResearchStore();
-  const { addToast } = useToastStore();
-  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
-    setMounted(true);
+    setIsMounted(true);
   }, []);
 
   const resetLocalState = () => {
-    setStep(1);
     setTopic("");
     setTitleOptions([]);
     setBibliography([]);
+    setKeywords([]);
     setSelectedIdx(null);
     setError(null);
     setShowCancelConfirm(false);
   };
 
-  const handleCloseAttempt = () => {
-    if (isGenerating || titleOptions.length > 0) {
+  useEffect(() => {
+    if (!open) {
+      const timer = setTimeout(resetLocalState, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isGenerating) {
+      interval = setInterval(() => {
+        setLoadingIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [isGenerating]);
+
+  const handleClose = () => {
+    if (isGenerating) {
       setShowCancelConfirm(true);
     } else {
       setOpen(false);
@@ -67,67 +112,8 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
 
   const confirmCancel = () => {
     setOpen(false);
+    setIsGenerating(false);
     setShowCancelConfirm(false);
-  };
-
-  useResetModalState(open, resetLocalState);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (isGenerating) {
-      interval = setInterval(() => {
-        setLoadingIndex((prev) => (prev + 1) % 4);
-      }, 3000);
-    }
-    return () => clearInterval(interval);
-  }, [isGenerating]);
-
-  const formatErrorMessage = (err: any) => {
-    const status = err.status || err.status_code;
-    const message = err.message || "";
-    const lowerMessage = message.toLowerCase();
-    
-    // Informational log for debugging (using log to bypass dev overlay)
-    console.log("Research AI Debug:", { status, message });
-
-    // 1. Handling Capacity / Limit (including Indonesian keywords)
-    if (
-      status === 429 || 
-      lowerMessage.includes("429") || 
-      lowerMessage.includes("limit") || 
-      lowerMessage.includes("quota") ||
-      lowerMessage.includes("penuh")
-    ) {
-      return "Waduh, kapasitas AI kami sedang penuh. Mohon tunggu 1 menit lagi ya.";
-    }
-
-    // 2. Handling Timeout / Server Error
-    if (
-      status === 500 || 
-      status === 504 || 
-      lowerMessage.includes("500") || 
-      lowerMessage.includes("504") || 
-      lowerMessage.includes("timeout") ||
-      lowerMessage.includes("lelah")
-    ) {
-      return "Sistem kami sedang sedikit lelah. Mari coba lagi dalam beberapa detik.";
-    }
-
-    // 3. Handling Network / Technical Strings
-    if (
-      lowerMessage.includes("network") || 
-      lowerMessage.includes("fetch") || 
-      lowerMessage.includes("non-2xx") || 
-      lowerMessage.includes("functionshttperror")
-    ) {
-      if (lowerMessage.includes("network")) return "Koneksi terputus. Pastikan internet Anda lancar.";
-      return "Terjadi kendala teknis sejenak. Silakan klik 'Coba Lagi'.";
-    }
-
-    // Default friendly message (clean up technical prefixes)
-    return message.length > 5 && !message.includes("Error") && !message.includes("{") 
-      ? message 
-      : "Terjadi kendala teknis sejenak. Silakan klik 'Coba Lagi'.";
   };
 
   const handleBrainstorm = async () => {
@@ -136,185 +122,175 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
     setLoadingIndex(0);
     setError(null);
     try {
-      const { data, error, status } = await callResearchAI(topic, null, "brainstorm");
+      const { data, error: aiError, status } = await callResearchAI(topic, null, "brainstorm");
       
-      if (error) {
-        const humanMessage = formatErrorMessage({ message: error, status });
-        if (status === 429) {
-          setIsRateLimitOpen(true);
-        }
-        setError(humanMessage);
-        addToast({
-          type: "warning",
-          message: "Kendala Sejenak",
-          description: humanMessage
-        });
+      if (aiError) {
+        if (status === 429) setIsRateLimitOpen(true);
+        setError("Gagal menganalisis. Coba gunakan topik yang lebih spesifik.");
         setIsGenerating(false);
         return;
       }
       
-      // result now contains { options: TitleOption[], bibliography: BibliographyEntry[] }
-      if (data?.options) {
-        setTitleOptions(data.options);
-        setBibliography(data.bibliography || []);
-        setStep(2);
+      const validated = BrainstormSchema.safeParse(data);
+      if (!validated.success || !validated.data.options.length) {
+        throw new Error("Hasil AI tidak sesuai standar.");
       }
-    } catch (err: any) {
-      const humanMessage = "Terjadi kendala teknis mendadak. Silakan coba lagi.";
-      setError(humanMessage);
+
+      setTitleOptions(validated.data.options);
+      setBibliography((validated.data.bibliography as BibliographyEntry[]) || []);
+      setKeywords(validated.data.keywords || []);
+    } catch (err) {
+      console.error(err);
+      setError("Data riset tidak terbaca. Silakan coba lagi.");
     } finally {
       setIsGenerating(false);
     }
   };
 
   const handleConfirmSelection = async (idx: number) => {
+    if (isGenerating) return;
+    
     setSelectedIdx(idx);
     setIsGenerating(true);
-    setLoadingIndex(0);
+    setLoadingIndex(3);
     setError(null);
 
+    let redirected = false;
+
     try {
-      const selected = titleOptions[idx];
-      
-      // THE "COMMIT" ACTION - INSERT TO DATABASE FOR THE FIRST TIME
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Anda harus login untuk menyimpan riset.");
+      if (!user) throw new Error("Unauthorized");
 
-      // Sanitize Data for JSONB
-      const sanitizedOptions = (titleOptions || []).map(opt => ({
-        title: opt.title || "",
-        gap: opt.gap || "",
-        rationale: opt.rationale || ""
-      }));
-
-      const sanitizedBibliography = (bibliography || []).map(bib => ({
-        title: bib.title || "",
-        authors: bib.authors || "",
-        year: bib.year || new Date().getFullYear(),
-        url: bib.url || "",
-        abstract: bib.abstract || "",
-        doi: bib.doi || null
-      }));
-
-      const { data: newSession, error: insertError } = await supabase
+      // Verify quota
+      const { count } = await supabase
         .from("research_sessions")
-        .insert({
-          user_id: user.id,
-          initial_topic: topic,
-          title_options: sanitizedOptions,
-          bibliography: sanitizedBibliography,
-          current_step: 2,
-        })
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id);
+
+      const { data: sub } = await supabase
+        .from("user_subscriptions")
+        .select("plan_type")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      const plan = sub?.plan_type || "free";
+      const limit = plan === "pro" ? 10 : 2;
+
+      if (count !== null && count >= limit) {
+        throw new Error(`Limit tercapai! Tersedia ${limit} slot riset untuk paket ${plan.toUpperCase()}. Silahkan upgrade di menu Billing & Plan.`);
+      }
+
+      const finalData = {
+        user_id: user.id,
+        initial_topic: topic,
+        title_options: titleOptions,
+        bibliography: bibliography,
+        keywords: keywords,
+        current_step: 3,
+      };
+
+      const { data: newSession, error: insErr } = await supabase
+        .from("research_sessions")
+        .insert(finalData)
         .select("id")
         .single();
 
-      if (insertError) {
-         setError("Gagal menyimpan ke database. Struktur data tidak sesuai.");
-         setIsGenerating(false);
-         return;
-      }
+      if (insErr) throw insErr;
 
-      // STEP 2: CALL AI TO GENERATE CONTENT FOR THE NEWLY CREATED SESSION
-      const { data: generateData, error: generateError, status: generateStatus } = 
-        await callResearchAI(topic, newSession.id, "generate", selected.title);
+      const { data: genData, error: genErr } = await callResearchAI(
+        topic, 
+        newSession.id, 
+        "init", 
+        titleOptions[idx].title
+      );
 
-      if (generateError) {
-        const humanMessage = formatErrorMessage({ message: generateError, status: generateStatus });
-        if (generateStatus === 429) {
-          setIsRateLimitOpen(true);
-        }
-        setError(humanMessage);
-        addToast({
-          type: "warning",
-          message: "Proses Terhenti",
-          description: humanMessage
-        });
-        setIsGenerating(false);
-        return;
-      }
+      if (genErr) throw new Error(genErr);
 
-      if (generateData?.session) {
-        updateResearchData({
-          sessionId: generateData.session.id,
-          refinedTitle: generateData.session.refined_title,
-          objectives: generateData.session.research_objectives || [],
-          currentStep: 3,
-        });
-        
-        // Final Redirect
+      // We only need the session metadata/basics now
+      const session = genData.session;
+      updateResearchData({
+        sessionId: session.id,
+        refinedTitle: session.refined_title,
+        keywords: session.keywords,
+        objectives: session.research_objectives,
+        currentStep: 3,
+      });
+      
+      if (!redirected) {
+        redirected = true;
         setOpen(false);
-        router.push(`/research/${generateData.session.id}`);
+        router.push(`/research/${session.id}`);
       }
-    } catch (err: any) {
-      setError("Gagal membangun riset. Silakan coba kembali.");
-    } finally {
+    } catch (err: unknown) {
+      console.error(err);
+      const message = err instanceof Error ? err.message : "Gagal membangun riset. Coba kembali.";
+      setError(message);
       setIsGenerating(false);
     }
   };
 
-  if (!mounted) {
-    return <>{trigger}</>;
-  }
+  if (!isMounted) return <>{trigger}</>;
 
   return (
-    <Dialog.Root open={open} onOpenChange={(v) => {
-      if (!v) {
-        handleCloseAttempt();
-      } else {
-        setOpen(true);
-      }
-    }}>
-      <Dialog.Trigger asChild>
-        {trigger}
-      </Dialog.Trigger>
+    <Dialog.Root open={open} onOpenChange={setOpen}>
+      <Dialog.Trigger asChild>{trigger}</Dialog.Trigger>
       <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 animate-in fade-in duration-300" />
+        <Dialog.Overlay 
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 animate-in fade-in duration-300"
+          onClick={handleClose}
+        />
         <Dialog.Content 
-          onPointerDownOutside={(e) => e.preventDefault()}
-          onEscapeKeyDown={(e) => {
-            e.preventDefault();
-            handleCloseAttempt();
-          }}
-          className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl max-h-[85vh] bg-white rounded-[2.5rem] shadow-2xl z-50 p-0 animate-in zoom-in-95 fade-in duration-300 focus:outline-none flex flex-col overflow-hidden"
+          asChild
+          onPointerDownOutside={(e) => { e.preventDefault(); handleClose(); }}
+          onEscapeKeyDown={(e) => { e.preventDefault(); handleClose(); }}
         >
-          <div className="relative flex-1 overflow-y-auto custom-scrollbar p-8 md:p-12">
-            {/* Close Button */}
-            <button 
-              onClick={handleCloseAttempt}
-              className="absolute top-8 right-8 p-2 rounded-full hover:bg-slate-50 text-slate-400 transition-colors z-10 bg-white/80 backdrop-blur-md"
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+            className={cn(
+              "fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md max-h-[90vh] bg-slate-950 dark:bg-obsidian-1 rounded-2xl shadow-2xl dark:shadow-black/60 z-50 p-0 focus:outline-none flex flex-col overflow-hidden border border-slate-200 dark:border-obsidian-2",
+            )}
+          >
+            <button
+              onClick={handleClose}
+              className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/5 text-slate-500 hover:text-white transition-all z-10"
+              aria-label="Tutup modal"
             >
-              <X size={20} />
+              <HugeiconsIcon icon={Cancel01Icon} size={16} />
             </button>
 
-            {step === 1 ? (
-              <div className="space-y-10">
-                <div className="space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-900">
-                    <BrainCircuit size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest leading-none">New Research</span>
+            <div className="relative flex-1 overflow-y-auto custom-scrollbar p-6">
+              <div className="space-y-6">
+                <div className="space-y-2.5">
+                  <div className="inline-flex items-center gap-2 px-2 py-0.5 rounded-full bg-slate-900 border border-slate-800 text-slate-500">
+                    <HugeiconsIcon icon={Brain02Icon} size={10} className="text-lime-500" />
+                    <span className="text-[8px] font-black leading-none">PharisAI Research Engine</span>
                   </div>
                   <Dialog.Title asChild>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Apa fenomena yang ingin Anda teliti?</h2>
+                    <h2 className="text-lg md:text-xl font-medium text-slate-100 tracking-tight leading-tight">
+                      {titleOptions.length > 0 ? "Pilih Fokus Penelitian" : "Mulai Riset Sekarang"}
+                    </h2>
                   </Dialog.Title>
                   <Dialog.Description asChild>
-                    <p className="text-slate-500 font-medium leading-relaxed">
-                      Tuangkan ide, masalah, atau fenomena awal. PharisAI akan membantu membedahnya menjadi struktur akademik.
+                    <p className="text-xs md:text-sm text-slate-400 leading-relaxed font-normal">
+                      {titleOptions.length > 0 
+                        ? "Pilih satu judul di bawah untuk menyusun draf struktur Bab 1-7."
+                        : "Tuangkan ide awal Anda melalui PharisAI Core Engine."
+                      }
                     </p>
                   </Dialog.Description>
                 </div>
 
                 {error && (
-                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="p-1.5 rounded-lg bg-amber-100 text-amber-600 shrink-0">
-                      <AlertCircle size={16} />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <p className="text-sm font-medium text-amber-800 leading-relaxed">
-                        {error}
-                      </p>
+                  <div className="p-4 rounded-xl bg-red-500/5 border border-red-500/20 flex items-start gap-3 animate-in fade-in">
+                    <HugeiconsIcon icon={AlertCircleIcon} size={16} className="text-red-500 shrink-0 mt-0.5" />
+                    <div className="flex-1 space-y-1">
+                      <p className="text-xs font-bold text-red-200 leading-relaxed">{error}</p>
                       <button 
-                        onClick={() => handleBrainstorm()}
-                        className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors underline decoration-2 underline-offset-4"
+                        onClick={() => titleOptions.length > 0 ? handleConfirmSelection(selectedIdx || 0) : handleBrainstorm()}
+                        className="text-[10px] font-black text-white underline decoration-2 underline-offset-4"
                       >
                         Coba Lagi
                       </button>
@@ -322,190 +298,102 @@ export default function NewResearchModal({ trigger }: { trigger: React.ReactNode
                   </div>
                 )}
 
-                <div className="relative">
-                  <textarea
-                    autoFocus
-                    value={topic}
-                    onChange={(e) => setTopic(e.target.value)}
-                    placeholder="Contoh: Pengaruh AI terhadap efisiensi penulisan jurnal mahasiswa tingkat akhir..."
-                    className="w-full bg-slate-50/50 rounded-2xl p-6 min-h-[220px] text-lg text-slate-800 placeholder-slate-300 border-none focus:ring-2 focus:ring-slate-200 transition-all resize-none"
-                    disabled={isGenerating}
-                  />
-                  
-                  <div className="absolute bottom-4 right-4">
-                    <button
-                      onClick={handleBrainstorm}
-                      disabled={!topic || isGenerating}
-                      className={cn(
-                        "flex items-center gap-2 px-6 py-3 rounded-xl font-bold transition-all shadow-lg active:scale-95",
-                        isGenerating 
-                          ? "bg-slate-800 text-white" 
-                          : "bg-slate-900 text-white hover:bg-black"
-                      )}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                          <span className="text-sm">{step1LoadingMessages[loadingIndex]}</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Lanjut</span>
-                          <ArrowRight size={18} />
-                        </>
-                      )}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-8">
-                <div className="space-y-3">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-900">
-                    <Sparkles size={14} />
-                    <span className="text-[10px] font-bold uppercase tracking-widest leading-none">Title Selection</span>
-                  </div>
-                  <Dialog.Title asChild>
-                    <h2 className="text-3xl font-bold text-slate-900 tracking-tight">Pilih Arah Judul Penelitian</h2>
-                  </Dialog.Title>
-                  <Dialog.Description asChild>
-                    <p className="text-slate-500 font-medium">Berdasarkan research gap yang ditemukan, pilih satu arah yang paling sesuai.</p>
-                  </Dialog.Description>
-                </div>
-
-                {error && (
-                  <div className="p-4 rounded-2xl bg-amber-50 border border-amber-100 flex items-start gap-3 animate-in fade-in slide-in-from-top-2 duration-300">
-                    <div className="p-1.5 rounded-lg bg-amber-100 text-amber-600 shrink-0">
-                      <AlertCircle size={16} />
-                    </div>
-                    <div className="flex-1 space-y-2">
-                      <p className="text-sm font-medium text-amber-800 leading-relaxed">
-                        {error}
-                      </p>
-                      <button 
-                        onClick={() => handleConfirmSelection(selectedIdx!)}
-                        className="text-xs font-bold text-amber-600 hover:text-amber-700 transition-colors underline decoration-2 underline-offset-4"
-                      >
-                        Coba Lagi
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                <div className="grid gap-4">
-                  {titleOptions.map((option, i) => (
-                    <button
-                      key={i}
+                {titleOptions.length === 0 ? (
+                  <div className="space-y-6">
+                    <textarea
+                      autoFocus
+                      value={topic}
+                      onChange={(e) => setTopic(e.target.value)}
+                      placeholder="Contoh: Pengaruh AI terhadap efisiensi penulisan jurnal mahasiswa..."
+                      className="w-full bg-slate-900/40 border-slate-800 rounded-xl p-5 min-h-[140px] text-sm text-slate-100 placeholder-slate-600 focus:border-lime-500/50 focus:ring-1 focus:ring-lime-500/20 transition-all resize-none outline-none shadow-sm"
                       disabled={isGenerating}
-                      onClick={() => handleConfirmSelection(i)}
-                      className={cn(
-                        "text-left p-6 rounded-2xl border-2 transition-all group relative overflow-hidden",
-                        selectedIdx === i 
-                          ? "border-slate-900 bg-slate-50" 
-                          : "border-slate-100 hover:border-slate-200 bg-white"
-                      )}
-                    >
-                      <div className="flex gap-4">
-                        <div className="w-12 h-12 rounded-2xl bg-slate-100 text-slate-600 flex items-center justify-center shrink-0">
-                          {i === 0 && <Target size={20} />}
-                          {i === 1 && <Lightbulb size={20} />}
-                          {i === 2 && <Sparkles size={20} />}
-                        </div>
-                        <div className="space-y-2">
-                          <h3 className="text-lg font-bold text-slate-900 group-hover:text-black transition-colors leading-snug">
-                            {option.title}
-                          </h3>
-                          <p className="text-sm text-slate-500 leading-relaxed">
-                            {option.gap}
-                          </p>
-                        </div>
-                      </div>
-                    </button>
-                  ))}
-                </div>
-
-                {isGenerating && (
-                  <div className="flex flex-col items-center gap-3 py-4 animate-in fade-in duration-500">
-                    <div className="w-10 h-10 border-4 border-slate-100 border-t-slate-900 rounded-full animate-spin" />
-                    <p className="text-sm font-bold text-slate-600 animate-pulse">{step2LoadingMessages[loadingIndex]}</p>
+                    />
+                    
+                    <div className="flex items-center justify-end gap-3 pt-2">
+                      <Button 
+                        variant="ghost" 
+                        onClick={handleClose} 
+                        disabled={isGenerating}
+                        className="px-5 py-2 h-auto text-[13px] text-slate-400 hover:text-slate-200 hover:bg-transparent"
+                      >
+                        Batal
+                      </Button>
+                      <Button
+                        onClick={handleBrainstorm}
+                        disabled={!topic || isGenerating}
+                        isLoading={isGenerating}
+                        className="bg-lime-600 text-white hover:bg-lime-500 font-medium px-5 py-2 h-auto text-[13px] rounded-xl shadow-lg shadow-lime-900/10 border-none transition-all"
+                      >
+                        {isGenerating ? loadingMessages[loadingIndex] : "Mulai Analisis"}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2 duration-400">
+                    <div className="grid gap-3">
+                      {titleOptions.map((option, i) => (
+                        <button
+                          key={i}
+                          disabled={isGenerating}
+                          onClick={() => handleConfirmSelection(i)}
+                          className={cn(
+                            "text-left p-6 rounded-2xl border transition-all group relative overflow-hidden",
+                            selectedIdx === i 
+                              ? "border-accent-lime bg-obsidian-2" 
+                              : "border-obsidian-2 hover:border-slate-700 bg-obsidian-1"
+                          )}
+                        >
+                          <div className="flex gap-4">
+                            <div className={cn(
+                              "w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-colors",
+                              selectedIdx === i 
+                                ? "bg-accent-lime text-obsidian-0" 
+                                : "bg-obsidian-2 text-slate-500"
+                            )}>
+                              {i === 0 && <HugeiconsIcon icon={TargetIcon} size={20} />}
+                              {i === 1 && <HugeiconsIcon icon={Idea01Icon} size={20} />}
+                              {i === 2 && <HugeiconsIcon icon={SparklesIcon} size={20} />}
+                            </div>
+                            <div className="space-y-1">
+                              <h3 className="text-base font-bold text-slate-100 leading-tight">{option.title}</h3>
+                              <p className="text-[11px] text-slate-500 font-medium line-clamp-2 leading-relaxed">
+                                Gap: {option.gap}
+                              </p>
+                            </div>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
-            )}
-            
-            {/* Shimmer overlay (during generation) */}
-            {isGenerating && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden rounded-[2.5rem]">
-                 <div className="absolute inset-0 bg-linear-to-r from-transparent via-slate-100/30 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-              </div>
-            )}
 
-            {/* Cancel Confirmation Overlay */}
-            {showCancelConfirm && (
-              <div className="absolute inset-0 bg-white/95 backdrop-blur-md z-50 flex flex-col items-center justify-center p-12 text-center animate-in fade-in zoom-in-95 duration-200">
-                <div className="w-16 h-16 rounded-3xl bg-amber-50 text-amber-500 flex items-center justify-center mb-6">
-                  <AlertCircle size={32} />
+              {showCancelConfirm && (
+                <div className="absolute inset-0 bg-slate-950/95 dark:bg-obsidian-1/95 backdrop-blur-sm z-[60] flex flex-col items-center justify-center p-8 text-center animate-in fade-in zoom-in-95 duration-200">
+                  <div className="w-14 h-14 rounded-2xl bg-obsidian-2 text-slate-100 flex items-center justify-center mb-6 border border-obsidian-3 shadow-xl">
+                    <HugeiconsIcon icon={AlertCircleIcon} size={28} strokeWidth={1.5} className="text-accent-lime" />
+                  </div>
+                  <h3 className="text-xl font-bold text-white mb-2 tracking-tight">Hentikan Analisis?</h3>
+                  <p className="text-sm text-slate-400 font-medium leading-relaxed mb-8 max-w-xs">
+                    Seluruh progres pencarian literatur dan research gap akan hilang secara permanen.
+                  </p>
+                  <div className="flex flex-col w-full max-w-[240px] gap-3">
+                     <Button variant="danger" size="md" onClick={confirmCancel}>Ya, Batalkan</Button>
+                     <Button variant="ghost" size="md" className="text-slate-300" onClick={() => setShowCancelConfirm(false)}>Lanjutkan Analisis</Button>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-slate-900 mb-3">Batalkan pembuatan riset?</h3>
-                <p className="text-slate-500 font-medium leading-relaxed mb-10 max-w-sm">
-                  Seluruh progres analisis dan pencarian jurnal saat ini akan dibatalkan dan tidak akan disimpan.
-                </p>
-                <div className="flex flex-col w-full max-w-xs gap-3">
-                  <button 
-                    onClick={confirmCancel}
-                    className="w-full py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all active:scale-95"
-                  >
-                    Ya, Batalkan
-                  </button>
-                  <button 
-                    onClick={() => setShowCancelConfirm(false)}
-                    className="w-full py-4 bg-slate-100 text-slate-600 rounded-2xl font-bold hover:bg-slate-200 transition-all active:scale-95"
-                  >
-                    Lanjutkan Riset
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+              )}
+            </div>
+          </motion.div>
         </Dialog.Content>
       </Dialog.Portal>
-
       <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-          margin: 20px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: #e2e8f0;
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: #cbd5e1;
-        }
-        @keyframes shimmer {
-          100% {
-            transform: translateX(100%);
-          }
-        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; margin: 20px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+        .animate-shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
       `}</style>
-      <ModelLimitDialog 
-        isOpen={isRateLimitOpen} 
-        onOpenChange={setIsRateLimitOpen} 
-      />
+      <ModelLimitDialog isOpen={isRateLimitOpen} onOpenChange={setIsRateLimitOpen} />
     </Dialog.Root>
   );
 }
-
-// Side-effect to reset state when modal is fully closed
-function useResetModalState(open: boolean, resetFn: () => void) {
-  useEffect(() => {
-    if (!open) {
-      const timer = setTimeout(resetFn, 300); // Wait for exit animation
-      return () => clearTimeout(timer);
-    }
-  }, [open, resetFn]);
-}
-

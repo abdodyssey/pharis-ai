@@ -1,92 +1,136 @@
 // src/components/research/editor/SidebarOutline.tsx
+"use client";
+
 import { useResearchStore } from "@/store/useResearchStore";
-import { cn } from "@/lib/utils";
-import { ListTree, Circle, Sparkles, FileSearch } from "lucide-react";
+import { cn, getWordCount } from "@/lib/utils";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { File02Icon, FileSearchIcon, ArrowRight01Icon } from "@hugeicons/core-free-icons";
 
 const FIXED_STRUCTURE = [
   'Abstrak',
   'Pendahuluan',
-  'Tinjauan Pustaka',
   'Metode Penelitian',
   'Hasil dan Pembahasan',
   'Kesimpulan dan Saran',
   'Daftar Pustaka'
 ];
 
+// Section framework labels
+const SECTION_FRAMEWORKS: Record<string, string> = {
+  'pendahuluan': 'CARS',
+  'metode penelitian': 'Justify',
+  'hasil dan pembahasan': 'Data',
+};
+
+/**
+ * SidebarOutline: A clean, Obsidian Deep document navigation component.
+ */
 export default function SidebarOutline() {
-  const { sections, activeSectionId, setActiveSectionId } = useResearchStore();
+  const { sections, activeSectionId, setActiveSectionId, saveSectionToDb } = useResearchStore();
+
+  const handleSectionClick = (sectionId: string) => {
+    if (sectionId === activeSectionId) return;
+
+    // Save current section before switching
+    const currentSection = sections.find(s => s.id === activeSectionId);
+    if (currentSection && activeSectionId) {
+      saveSectionToDb(activeSectionId, currentSection.content);
+    }
+
+    // Switch to new section
+    setActiveSectionId(sectionId);
+  };
 
   return (
-    <aside className="w-72 border-r border-slate-200/60 h-full bg-slate-50/50 flex flex-col shrink-0">
-      <div className="p-6">
-        <div className="flex items-center gap-2 text-slate-400 mb-6 px-2">
-          <ListTree size={14} />
-          <span className="text-[10px] font-bold tracking-[0.2em] uppercase">IMRAD Structure</span>
+    <aside className="w-64 border-r border-slate-100 dark:border-white/5 h-full bg-white dark:bg-obsidian-1 flex flex-col shrink-0 no-print animate-in slide-in-from-left duration-700">
+      {/* Header */}
+      <div className="px-6 pt-10 pb-6">
+        <div className="flex items-center gap-3 text-slate-900 dark:text-white mb-1">
+          <div className="w-6 h-6 rounded-lg bg-slate-950 dark:bg-accent-lime/15 flex items-center justify-center text-white dark:text-accent-lime shadow-xl shadow-slate-900/10 dark:shadow-black/50">
+            <HugeiconsIcon icon={File02Icon} size={12} />
+          </div>
+          <span className="text-[10px] font-black">Manuscript</span>
         </div>
-        
-        <nav className="space-y-1">
-          {FIXED_STRUCTURE.map((title, index) => {
-            const section = sections.find(s => s.title.toLowerCase() === title.toLowerCase());
-            const isActive = activeSectionId === section?.id;
-            const hasContent = section?.content && section.content.trim().length > 0;
-            const isMissing = !section;
-
-            return (
-              <button
-                key={title}
-                onClick={() => section && setActiveSectionId(section.id)}
-                className={cn(
-                  "w-full text-left px-4 py-2.5 text-sm transition-all duration-200 rounded-lg flex items-center gap-3 group relative overflow-hidden",
-                  isActive
-                    ? "bg-slate-100 text-slate-900 shadow-sm border-l-4 border-slate-900 font-bold"
-                    : isMissing
-                    ? "text-slate-300 hover:bg-white hover:text-slate-900 group"
-                    : "text-slate-500 hover:bg-white hover:text-slate-900 hover:shadow-sm"
-                )}
-              >
-                <span className={cn(
-                  "text-[10px] w-6 h-6 rounded-md flex items-center justify-center border transition-colors shrink-0",
-                  isActive 
-                    ? "bg-slate-900 border-slate-900 text-white" 
-                    : "bg-slate-100 border-slate-200 text-slate-400 group-hover:border-slate-300"
-                )}>
-                  {index + 1}
-                </span>
-                
-                <div className="flex flex-col min-w-0">
-                  <span className="truncate leading-tight">{title}</span>
-                  {isMissing ? (
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Empty</span>
-                  ) : !hasContent ? (
-                    <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Drafting...</span>
-                  ) : null}
-                </div>
-
-                {hasContent && (
-                  <div className="ml-auto flex items-center gap-1.5">
-                    <Sparkles size={10} className="text-slate-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-                    <Circle className="text-slate-900 fill-slate-900" size={6} />
-                  </div>
-                )}
-                
-                {isActive && !hasContent && (
-                  <Circle className="ml-auto text-slate-300 fill-slate-300" size={6} />
-                )}
-              </button>
-            );
-          })}
-        </nav>
       </div>
       
-      <div className="mt-auto p-6 border-t border-slate-200/40 bg-white/40">
-        <div className="text-[9px] font-black text-slate-450 uppercase tracking-[0.2em] mb-2 px-1">AI Grounding</div>
-        <div className="flex items-center gap-3 p-3 bg-slate-100/50 rounded-xl border border-slate-200/50">
-          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shrink-0 shadow-sm">
-            <FileSearch size={14} />
+      {/* Navigation */}
+      <nav className="flex-1 overflow-y-auto px-4 pb-10 space-y-2 custom-scrollbar">
+        {FIXED_STRUCTURE.map((title) => {
+          const section = sections.find(s => s.title.toLowerCase() === title.toLowerCase());
+          const isActive = activeSectionId === section?.id;
+          const wordCount = section?.content ? getWordCount(section.content) : 0;
+          const isCompleted = wordCount >= 100;
+          const hasContent = wordCount > 0;
+          const framework = SECTION_FRAMEWORKS[title.toLowerCase()];
+
+          return (
+            <button
+              key={title}
+              onClick={() => section && handleSectionClick(section.id)}
+              disabled={!section}
+              className={cn(
+                "w-full text-left p-4 transition-all duration-300 rounded-[22px] flex items-center justify-between group relative border",
+                isActive
+                  ? "bg-white dark:bg-white/5 border-slate-950 dark:border-accent-lime/30 shadow-2xl shadow-slate-900/10 dark:shadow-black/60 ring-1 ring-slate-950 dark:ring-accent-lime/20"
+                  : section
+                  ? "border-transparent hover:border-slate-100 dark:hover:border-white/5 hover:bg-slate-50 dark:hover:bg-white/[0.02] shadow-sm"
+                  : "opacity-20 cursor-not-allowed"
+              )}
+            >
+              <div className="flex flex-col min-w-0 pr-4">
+                <div className="flex items-center gap-2">
+                  <span className={cn(
+                    "text-[12px] leading-tight transition-all",
+                    isActive ? "font-black text-slate-950 dark:text-white" : "font-semibold text-slate-500 dark:text-slate-400 group-hover:text-slate-900 dark:group-hover:text-white"
+                  )}>
+                    {title}
+                  </span>
+                  {framework && (
+                    <span className="text-[7px] font-bold text-accent-lime/50 bg-accent-lime/5 px-1.5 py-0.5 rounded">
+                      {framework}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2 mt-1">
+                  <div className={cn(
+                    "w-1.5 h-1.5 rounded-full transition-all duration-500",
+                    isCompleted 
+                      ? "bg-slate-900 dark:bg-accent-lime" 
+                      : hasContent
+                      ? "bg-slate-300 dark:bg-amber-500 animate-pulse" 
+                      : "bg-slate-100 dark:bg-obsidian-2"
+                  )} />
+                  
+                  <span className={cn(
+                    "text-[8px] font-bold",
+                    isActive ? "text-slate-900 dark:text-slate-300" : "text-slate-300 dark:text-slate-600 group-hover:text-slate-400"
+                  )}>
+                    {isCompleted ? "Completed" : hasContent ? "Drafting" : "Empty"}
+                    {wordCount > 0 && ` · ${wordCount}w`}
+                  </span>
+                </div>
+              </div>
+
+              {isActive && (
+                <HugeiconsIcon icon={ArrowRight01Icon} size={14} className="text-slate-950 dark:text-accent-lime animate-in slide-in-from-left-2 duration-300" />
+              )}
+            </button>
+          );
+        })}
+      </nav>
+      
+      {/* Bottom Panel */}
+      <div className="p-6 border-t border-slate-50 dark:border-white/5 mt-auto">
+        <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-obsidian-2/50 rounded-2xl">
+          <div className="w-8 h-8 rounded-xl bg-slate-950 dark:bg-accent-lime/15 flex items-center justify-center text-white dark:text-accent-lime shrink-0 shadow-lg shadow-slate-200 dark:shadow-none">
+            <HugeiconsIcon icon={FileSearchIcon} size={14} />
           </div>
-          <div className="space-y-0.5">
-            <div className="text-[10px] font-bold text-slate-900">RAG Analysis</div>
-            <div className="text-[9px] text-slate-500 font-semibold uppercase tracking-widest">Bibliography Active</div>
+          <div className="min-w-0">
+            <div className="text-[10px] font-black text-slate-950 dark:text-white leading-none mb-1">Project Progress</div>
+            <div className="text-[8px] text-slate-400 dark:text-slate-500 font-bold truncate">
+              {sections.filter(s => getWordCount(s.content || "") >= 100).length}/{FIXED_STRUCTURE.length} Chapters Ready
+            </div>
           </div>
         </div>
       </div>

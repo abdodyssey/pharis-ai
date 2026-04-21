@@ -1,17 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { createClient } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useResearchStore } from "@/store/useResearchStore";
-import { User } from "@supabase/supabase-js";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Logout02Icon } from "@hugeicons/core-free-icons";
+import { type User } from "@supabase/supabase-js";
 
 export default function Navbar() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const supabase = createClient();
   const resetStore = useResearchStore((state) => state.resetStore);
 
   useEffect(() => {
@@ -62,7 +63,7 @@ export default function Navbar() {
         <div className="flex justify-between h-16 items-center">
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
-            <Link href="/dashboard" className="flex items-center gap-2 group">
+            <Link href="/" className="flex items-center gap-2 group">
               <div className="w-8 h-8 bg-linear-to-br from-slate-900 to-slate-800 rounded-lg flex items-center justify-center text-white font-bold shadow-lg shadow-slate-200 group-hover:scale-110 transition-transform">
                 P
               </div>
@@ -70,7 +71,7 @@ export default function Navbar() {
                 PharisAI
               </span>
             </Link>
-            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 border border-slate-200 uppercase tracking-wider">
+            <span className="px-2 py-0.5 rounded-full bg-slate-100 text-[10px] font-bold text-slate-600 border border-slate-200">
               Beta
             </span>
           </div>
@@ -78,7 +79,7 @@ export default function Navbar() {
           {/* Right: User Profile & Logout */}
           <div className="flex items-center gap-4 sm:gap-6">
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 border border-slate-100">
-              <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 uppercase shrink-0">
+              <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center text-[10px] font-bold text-slate-500 shrink-0">
                 {user.email?.[0] ?? "U"}
               </div>
               <span className="text-xs font-medium text-slate-600 truncate max-w-[120px]">
@@ -90,14 +91,7 @@ export default function Navbar() {
               onClick={handleLogout}
               className="flex items-center gap-2 text-sm font-medium text-slate-400 hover:text-red-500 transition-colors group px-2 py-1"
             >
-              <svg 
-                className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" 
-                fill="none" 
-                stroke="currentColor" 
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-              </svg>
+              <HugeiconsIcon icon={Logout02Icon} size={16} className="group-hover:translate-x-0.5 transition-transform" />
               <span className="hidden xs:inline">Keluar</span>
             </button>
           </div>

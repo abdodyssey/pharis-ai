@@ -10,7 +10,7 @@ export default async function ResearchEditorPage({
   const { id } = await params;
 
   return (
-    <div className="min-h-screen bg-slate-50 w-full">
+    <div className="h-screen bg-slate-50 dark:bg-obsidian-0 w-full overflow-hidden transition-colors duration-300">
       {/* 
         We use a Client Component for the main logic (Stepper + Workspace), 
         but we can wrap the whole thing or parts of it in Suspense 
